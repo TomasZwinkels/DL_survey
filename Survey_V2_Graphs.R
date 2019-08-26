@@ -857,7 +857,7 @@ model5 <- lmer(polscale~treatment_merged_num +
                nopartymismatch +
                toomuch +
                offset(I(betaimage*image_check_num)) +
-			   #country +
+			   country +
 			   (1|country) +
 			   (nopartymismatch|country)
 			   #(nopartymismatch|country)
@@ -947,19 +947,61 @@ ggplot(PREDAT, aes(x=treatment_merged_num, y=predictionsrandomslopemodel,color=c
 
 		B$countrytimespartymismatch <- paste(B$country,B$type,sep="-")
 		table(PREDAT$countrytimespartymismatch)
+		B$countrytimespartymismatch <- ifelse(B$countrytimespartymismatch == "CH-no_mismatch" |
+										      B$countrytimespartymismatch == "DE-no_mismatch",
+											  "no_mismatch",
+											  B$countrytimespartymismatch
+											 )
 		B
-				
+		
+		# we also need to do this for the prediction data dataframe		
+		PREDAT$countrytimespartymismatch <- ifelse(PREDAT$countrytimespartymismatch == "CH-no_mismatch" |
+										      PREDAT$countrytimespartymismatch == "DE-no_mismatch",
+											  "no_mismatch",
+											  PREDAT$countrytimespartymismatch
+											 )
+		table(PREDAT$countrytimespartymismatch)
+		
 		B$est <- as.numeric(as.character(B$est))
 		B$treatment_merged_num <- as.numeric(as.character(B$treatment_merged_num))
 		B
-				
+
+
+		my_theme = theme(
+									  axis.title.x = element_text(size = 16),
+									  axis.text.x = element_text(size = 12),
+									  axis.title.y = element_text(size = 16),
+									  axis.text.y = element_text(size = 12),
+									  legend.position="right",
+									  legend.title = element_text(size = 14),
+									  legend.text = element_text(size = 14)
+						)
+	
+B$countrytimespartymismatch <- factor(B$countrytimespartymismatch,levels=c("no_mismatch","CH-mismatch","DE-mismatch")) 
+PREDAT$countrytimespartymismatch <-	factor(PREDAT$countrytimespartymismatch,levels=c("no_mismatch","CH-mismatch","DE-mismatch"))
+table(B$countrytimespartymismatch)
+
 ggplot() +
-	geom_point(data = PREDAT,aes(x=treatment_merged_num, y=polscale,color=countrytimespartymismatch),size=1) +
-	geom_line(data = B,aes(x=treatment_merged_num, y=est,color=countrytimespartymismatch),size=1.5) +
-	scale_color_brewer(palette = "Dark2")
+	geom_jitter(data = PREDAT,aes(x=treatment_merged_num, y=polscale,color=countrytimespartymismatch),size=1,width = 0.15) +
+	geom_line(data = B,aes(x=treatment_merged_num, y=est,color=countrytimespartymismatch),size=2.0) +
+	scale_x_discrete(name ="Treatment: private to policy", 
+                    limits=seq(from=-4,to=5,by=1),
+					labels=c(111,211,311,122,123,133,222,322,233,333)
+					) +
+	scale_y_discrete(name="Candidate evaluation",
+					limits=seq(from=0, to=100, by=10),
+					labels=seq(from=0, to=100, by=10)
+					) +
+	scale_color_manual(name = "Estimated evaluation scores", 
+						 labels = c("no party mismatch","CH party mismatch", "DE party mismatch"),
+						 values=c("deeppink4", "grey7", "grey60")) +
+	my_theme 
+	
+
 	
 	
 	
+	table(PREDAT$treatment_merged_num)
 	
 	+ 
 PREDAT, aes(x=treatment_merged_num, y=est,color=countrytimespartymismatch)) +
@@ -1086,7 +1128,7 @@ summary(model6)
 		m3,
 		#m4,
 		m5,
-		type="latex",
+		type="text",
 		intercept.bottom=FALSE,
 		no.space=TRUE,
 		column.labels=(c("Treatment","Demographics etc","Oth. Respon.","Tweet.Char.")),
