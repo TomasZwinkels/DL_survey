@@ -982,7 +982,7 @@ PREDAT$countrytimespartymismatch <-	factor(PREDAT$countrytimespartymismatch,leve
 table(B$countrytimespartymismatch)
 
 ggplot() +
-	geom_jitter(data = PREDAT,aes(x=treatment_merged_num, y=polscale,color=countrytimespartymismatch),size=1,width = 0.15) +
+	geom_jitter(data = PREDAT,aes(x=treatment_merged_num, y=polscale,shape=countrytimespartymismatch,color=countrytimespartymismatch),size=0.75,width = 0.15) +
 	geom_line(data = B,aes(x=treatment_merged_num, y=est,color=countrytimespartymismatch),size=2.0) +
 	scale_x_discrete(name ="Treatment: private to policy", 
                     limits=seq(from=-4,to=5,by=1),
@@ -995,6 +995,10 @@ ggplot() +
 	scale_color_manual(name = "Estimated evaluation scores", 
 						 labels = c("no party mismatch","CH party mismatch", "DE party mismatch"),
 						 values=c("deeppink4", "grey7", "grey60")) +
+	scale_shape_manual(name="Observed evaluation scores", 
+					   labels = c("no party mismatch","CH party mismatch", "DE party mismatch"),
+					   values = c(0, 1, 2)) +
+	
 	my_theme 
 	
 
