@@ -3,7 +3,7 @@
 
 #setwd("G:\\Politikwissenschaft\\Team-Bailer\\Digital Lifes\\r-scripts\\r-scripts survey")
 setwd("C:\\Users\\suttad00\\Basel Powi Dropbox\\Adrian Sutter\\DigitalLives\\r-scripts\\r-scripts survey")
-setwd("C:\\Users\\turnerzw\\Basel Powi Dropbox\\Tomas Zwinkels\\DigitalLives\\r-scripts\\r-scripts survey")
+#setwd("C:\\Users\\turnerzw\\Basel Powi Dropbox\\Tomas Zwinkels\\DigitalLives\\r-scripts\\r-scripts survey")
 
 
 #install.packages("dplyr")
