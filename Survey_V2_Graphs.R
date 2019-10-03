@@ -1,56 +1,84 @@
 ################################################### Set WD , Load Packages & Attach Dataset ##############################################
 #########################################################################################################################################
 
-#setwd("G:\\Politikwissenschaft\\Team-Bailer\\Digital Lifes\\r-scripts\\r-scripts survey")
-setwd("C:\\Users\\suttad00\\Basel Powi Dropbox\\Adrian Sutter\\DigitalLives\\r-scripts\\r-scripts survey")
-#setwd("C:\\Users\\turnerzw\\Basel Powi Dropbox\\Tomas Zwinkels\\DigitalLives\\r-scripts\\r-scripts survey")
+# setup
+	#setwd("G:\\Politikwissenschaft\\Team-Bailer\\Digital Lifes\\r-scripts\\r-scripts survey")
+	setwd("C:\\Users\\suttad00\\Basel Powi Dropbox\\Adrian Sutter\\DigitalLives\\r-scripts\\r-scripts survey")
+	#setwd("C:\\Users\\turnerzw\\Basel Powi Dropbox\\Tomas Zwinkels\\DigitalLives\\r-scripts\\r-scripts survey")
 
 
-#install.packages("dplyr")
-#install.packages("readxl")
-#install.packages("ggplot2")
-#install.packages("sqldf")
-#install.packages("XLConnect")
-#install.packages("stargazer")
-#install.packages("lme4")
+	#install.packages("dplyr")
+	#install.packages("readxl")
+	#install.packages("ggplot2")
+	#install.packages("sqldf")
+	#install.packages("XLConnect")
+	#install.packages("stargazer")
+	#install.packages("lme4")
 
-library(readxl)
-library(dplyr)
-library(ggplot2)
-library(sqldf)
-library(XLConnect)
-library(lme4)
-library(car)
-library(viridis)
+	library(readxl)
+	library(dplyr)
+	library(ggplot2)
+	library(sqldf)
+	library(XLConnect)
+	library(lme4)
+	library(car)
+	library(viridis)
 
-#attach(PilotV1_DO_clean)
-#attach(PilotV1_DO_clean_tomastries)
+	#attach(PilotV1_DO_clean)
+	#attach(PilotV1_DO_clean_tomastries)
 
-#loading the data from the surveys 
+	# loading the data from the surveys 
 
-PilotV2_clean_CH_DE <- read_excel("PilotV2_for_R_Clean.xlsx")
-PilotV2_clean_CH_FR <- read_excel("PilotV2_for_R_Clean_CH_FR.xlsx")
-PilotV2_clean_DE <- read_excel("PilotV2_for_R_Clean_DE.xlsx")
+	PilotV2_clean_CH_DE <- read_excel("PilotV2_for_R_Clean.xlsx")
+	PilotV2_clean_CH_FR <- read_excel("PilotV2_for_R_Clean_CH_FR.xlsx")
+	PilotV2_clean_DE <- read_excel("PilotV2_for_R_Clean_DE.xlsx")
 
-#bind the excel sheets together
+	# bind the excel sheets together
 
-DF <- bind_rows(PilotV2_clean_CH_DE,PilotV2_clean_CH_FR,PilotV2_clean_DE)
-head(DF)
-summary(DF)
+	DF <- bind_rows(PilotV2_clean_CH_DE,PilotV2_clean_CH_FR,PilotV2_clean_DE)
+	head(DF)
+	summary(DF)
+
+	# select key variables of interest
+		varstotake <- c("Age","Gender","Gender_politician","voting_kanton","Education","SocialMediaUse","political_content","Follow_Politician", 
+					"SocialMediaPosting","party_treatment","left_right_scale_1","presented_party","suitability","L2V","Warmth"
+					,"Credibility","Thermometer","NameTreatment", "country","Party")
+
+		AnalysisDF <- DF[varstotake]
+		head(AnalysisDF)
+		summary(AnalysisDF)
+
+	# get dummies that indicate thar respodents did not have a party preference or a preference for an obscure party
+		
+		# this should be given by the 'Party' dummy, lets first inspect its completeness accross the three data-frames
+		table(AnalysisDF$Party)
+		table(is.na(AnalysisDF$Party))
+
+		# no party preference dummy
+			AnalysisDF$nopartypref <- ifelse((AnalysisDF$Party == "Ich weiss es nicht"| AnalysisDF$Party == "Je ne sais pas"),"no pref","has pref") 
+			
+			# distribution accross countries 
+			table(AnalysisDF$nopartypref)
+			table(AnalysisDF$country)
+			table(AnalysisDF$nopartypref,AnalysisDF$country)
+			prop.table(table(AnalysisDF$nopartypref,AnalysisDF$country),2) # quite a bit less germans (15% versus 25% in CH, with no party preference... is this representative of the population?!)
+	
+		# obscure party dummy
+			AnalysisDF$obscurepartydummy <- ifelse((AnalysisDF$Party == "Partei:"| AnalysisDF$Party == "Parti:"),"obscure","regular") 
+			table(AnalysisDF$obscurepartydummy)
+			table(AnalysisDF$obscurepartydummy,AnalysisDF$country)
+			prop.table(table(AnalysisDF$obscurepartydummy,AnalysisDF$country),2) # slightly more 'obscure' parties in DE
+			
+	# get the perceived left/right party positions in that Natalie provided
+	
+		# 'party_treatment' contains the parties that respondents saw
+		table(AnalysisDF$party_treatment) # how can this be 'I don't know?!, also contains values like 'Partei:' and 'Parti:' so that can also not be correct
+		
+
 
 ###########################################################################################################################################
 ############################################################ DESCRIPTIVES #################################################################
 ##########################################################################################################################################
-
-#Creating Data Frame for Analysis, calling just the variables needed for analysis
-
-varstotake <- c("Age","Gender","Gender_politician","voting_kanton","Education","SocialMediaUse","political_content","Follow_Politician", 
-                "SocialMediaPosting","party_treatment","left_right_scale_1","presented_party","suitability","L2V","Warmth"
-                ,"Credibility","Thermometer","NameTreatment", "country")
-
-AnalysisDF <- DF[varstotake]
-head(AnalysisDF)
-summary(AnalysisDF)
 
 
 #write.csv(AnalysisDF, file = "AnalysisDF.csv",row.names=FALSE)
@@ -858,6 +886,8 @@ model5 <- lmer(polscale~treatment_merged_num +
                toomuch +
                offset(I(betaimage*image_check_num)) +
 			   country +
+			   nopartypref +
+			   obscurepartydummy +
 			   (1|country) +
 			   (nopartymismatch|country)
 			   #(nopartymismatch|country)
@@ -1053,7 +1083,7 @@ summary(model6)
 
 
 # use bootstrapping to get a standard error for the variance estimates.
-		runconfints <- TRUE
+		runconfints <- FALSE
 		
 				indivlvar <- format(round(c(
 							as.data.frame(VarCorr(m1))$vcov[2],
