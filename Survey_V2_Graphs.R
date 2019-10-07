@@ -81,7 +81,11 @@
 													,"no pref in selected condition","had pref in selected condition")
 			
 		# obscure party dummy
-			AnalysisDF$obscurepartydummy <- ifelse((AnalysisDF$Party == "Partei:"| AnalysisDF$Party == "Parti:"),"obscure","regular") 
+			AnalysisDF$obscurepartydummy <- ifelse((AnalysisDF$Party == "Partei:"| 
+													AnalysisDF$Party == "Parti:" | 
+													AnalysisDF$Party2ndChoice == "Partei:" | 
+													AnalysisDF$Party2ndChoice == "Parti:"),
+													"obscure","regular") 
 			table(AnalysisDF$obscurepartydummy)
 			table(AnalysisDF$obscurepartydummy,AnalysisDF$country)
 			prop.table(table(AnalysisDF$obscurepartydummy,AnalysisDF$country),2) # slightly more 'obscure' parties in DE
@@ -124,12 +128,12 @@
 			
 			AnalysisDF$country <- as.character(AnalysisDF$country)
 			
-			PAPO$avg_pers_lmer <- as.numeric(as.character(PAPO$average_perceived_left_right_position))
+			PAPO$avg_perc_lmer <- as.numeric(as.character(PAPO$average_perceived_left_right_position))
 			PAPO$abv_in_survey <- as.character(PAPO$abv_in_survey)
 			PAPO$country <- as.character(PAPO$country)
 			
 			TEMP <- sqldf("
-						   SELECT AnalysisDF.*, PAPO.party_parlgov_id, PAPO.avg_pers_lmer
+						   SELECT AnalysisDF.*, PAPO.party_parlgov_id, PAPO.avg_perc_lmer
 						   FROM AnalysisDF LEFT JOIN PAPO
 						   ON
 							 (
@@ -145,8 +149,8 @@
 			AnalysisDF <- TEMP
 			
 			# inspect the results
-				summary(AnalysisDF$avg_pers_lmer)
-				table(is.na(AnalysisDF$avg_pers_lmer))
+				summary(AnalysisDF$avg_perc_lmer)
+				table(is.na(AnalysisDF$avg_perc_lmer))
 			
 			# proper 'remaining' missing cases
 				AnalysisDF$othercases <- ifelse(AnalysisDF$obscurepartydummy == "obscure" | 
@@ -156,13 +160,85 @@
 				table(AnalysisDF$othercases)
 			
 												
-				table(is.na(AnalysisDF$avg_pers_lmer),AnalysisDF$othercases)	# 619 cases left -- parties missing?
+				table(is.na(AnalysisDF$avg_perc_lmer),AnalysisDF$othercases)	# 619 cases left -- parties missing?
 
-				REMCAS <- AnalysisDF[which(is.na(AnalysisDF$avg_pers_lmer) & AnalysisDF$othercases == "other case"),]
+				REMCAS <- AnalysisDF[which(is.na(AnalysisDF$avg_perc_lmer) & AnalysisDF$othercases == "other case"),]
 				nrow(REMCAS)
 				
 				table(REMCAS$party_treatment)
 				table(REMCAS$party_treatment,REMCAS$language)
+		
+		# now calculcate the distance between the own left/right position and the one of the presented party
+		
+			# inspect the left/right scales
+				summary(AnalysisDF$left_right_scale_1)
+				hist(AnalysisDF$left_right_scale_1,breaks=20)
+				hist(AnalysisDF$avg_perc_lmer,breaks=20)
+			
+			# lets transform our one to a scale 0 to 10
+				AnalysisDF$left_right_scale_010 <- AnalysisDF$left_right_scale_1/10
+				summary(AnalysisDF$left_right_scale_010)	
+			
+			# bunch of checks that should show results
+				
+				# first, lets get some stuff in
+					TEMP2 <- sqldf("
+							   SELECT AnalysisDF.*, PAPO.avg_perc_lmer 'lmer_of_first_party'
+							   FROM AnalysisDF LEFT JOIN PAPO
+							   ON
+								 (
+								  AnalysisDF.Party = PAPO.abv_in_survey
+								   AND 
+								  AnalysisDF.country = PAPO.country
+								  )
+							   
+							  ")
+					nrow(AnalysisDF)
+					nrow(TEMP2)
+					head(TEMP2)
+					AnalysisDF <- TEMP2
+				
+				# this is really just a check if merging was done correctly etc
+				
+					# select the cases that got to see their own prefence
+					DFSFP <- AnalysisDF[which(AnalysisDF$party_treatment == AnalysisDF$Party),]
+					table(DFSFP$presented_party) # looks good, some people had same second party as first party?
+					AnalysisDF[which(AnalysisDF$Party2ndChoice == AnalysisDF$Party),] # these are all people that wrote down custom party choices in both first and second choice
+					
+			
+					# use this selection of all cases that saw their first choice party, and see if correlation between own left/right position and the one of the party is indeed strong
+					plot(DFSFP$avg_perc_lmer,DFSFP$left_right_scale_010)
+					cor(DFSFP$avg_perc_lmer,DFSFP$left_right_scale_010,use="pairwise.complete.obs")
+					
+					# and for the second party choice
+					DFSSP <- AnalysisDF[which(AnalysisDF$party_treatment == AnalysisDF$Party2ndChoice),]
+					nrow(DFSSP)
+					plot(DFSSP$avg_perc_lmer,DFSSP$left_right_scale_010)
+					cor(DFSSP$avg_perc_lmer,DFSSP$left_right_scale_010,use="pairwise.complete.obs") # indeed weaker
+					
+					# other party (should be a negative correlation?)
+					table(AnalysisDF$presented_party)
+					DFOTH <- AnalysisDF[which(AnalysisDF$presented_party == "Other Party"),]
+					nrow(DFOTH)
+					plot(DFOTH$avg_perc_lmer,DFOTH$left_right_scale_010)
+					cor(DFOTH$avg_perc_lmer,DFOTH$left_right_scale_010,use="pairwise.complete.obs") # indeed weaker
+					
+					# no party - should flatline -- ow yes, ofcourse.. then we do not have any party info!
+					DFNO <- AnalysisDF[which(AnalysisDF$presented_party == "No Party"),]
+					nrow(DFNO)
+					plot(DFNO$avg_perc_lmer,DFNO$left_right_scale_010)
+					cor(DFNO$avg_perc_lmer,DFNO$left_right_scale_010,use="pairwise.complete.obs") # indeed weaker
+					
+					# in one graphic
+					ggplot(AnalysisDF, aes(x=avg_perc_lmer, y=left_right_scale_010, color=presented_party, shape=presented_party)) +
+					  geom_point() + 
+					  geom_smooth(method=lm, aes(fill=presented_party)) +
+					  ylab("respondents self-reported left right score") +
+					  xlab("average perceived left right score for party in selects2015 and DEU2017")
+					  
+					
+					
+			# and set this value to zero for all of the 'known cases'
 				
 ###########################################################################################################################################
 ############################################################ DESCRIPTIVES #################################################################
