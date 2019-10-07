@@ -29,20 +29,21 @@
 
 	# loading the data from the surveys 
 
-	PilotV2_clean_CH_DE <- read_excel("PilotV2_for_R_Clean.xlsx")
-	PilotV2_clean_CH_FR <- read_excel("PilotV2_for_R_Clean_CH_FR.xlsx")
-	PilotV2_clean_DE <- read_excel("PilotV2_for_R_Clean_DE.xlsx")
+	PilotV2_clean_CH_DE <- as.data.frame(read_excel("PilotV2_for_R_Clean.xlsx"))
+	PilotV2_clean_CH_FR <- as.data.frame(read_excel("PilotV2_for_R_Clean_CH_FR_TLA.xlsx"))
+	PilotV2_clean_DE <- as.data.frame(read_excel("PilotV2_for_R_Clean_DE_TLA.xlsx"))
 
 	# bind the excel sheets together
 
 	DF <- bind_rows(PilotV2_clean_CH_DE,PilotV2_clean_CH_FR,PilotV2_clean_DE)
 	head(DF)
 	summary(DF)
+	colnames(DF)
 
 	# select key variables of interest
 		varstotake <- c("Age","Gender","Gender_politician","voting_kanton","Education","SocialMediaUse","political_content","Follow_Politician", 
 					"SocialMediaPosting","party_treatment","left_right_scale_1","presented_party","suitability","L2V","Warmth"
-					,"Credibility","Thermometer","NameTreatment", "country","Party")
+					,"Credibility","Thermometer","NameTreatment", "country","Party","Party2ndChoice","language")
 
 		AnalysisDF <- DF[varstotake]
 		head(AnalysisDF)
@@ -55,27 +56,114 @@
 		table(is.na(AnalysisDF$Party))
 
 		# no party preference dummy
-			AnalysisDF$nopartypref <- ifelse((AnalysisDF$Party == "Ich weiss es nicht"| AnalysisDF$Party == "Je ne sais pas"),"no pref","has pref") 
+		
+			# first party
+				AnalysisDF$nofirstpartypref <- ifelse((AnalysisDF$Party == "Ich weiss es nicht"| AnalysisDF$Party == "Je ne sais pas"),"no pref","has pref") 
+				# should this not be 'no first party preference' and 'no second'? --o
+				# is a little complicated because of this matters also depends on what you where shown!
+				
+				# distribution accross countries 
+				table(AnalysisDF$nofirstpartypref)
+				table(AnalysisDF$country)
+				table(AnalysisDF$nofirstpartypref,AnalysisDF$country)
+				prop.table(table(AnalysisDF$nofirstpartypref,AnalysisDF$country),2) # quite a bit less germans (15% versus 25% in CH, with no party preference... is this representative of the population?!)
+		
+			# second party preference
+				AnalysisDF$nosecondpartypref <- ifelse((AnalysisDF$Party2ndChoice == "Ich weiss es nicht"| AnalysisDF$Party2ndChoice == "Je ne sais pas"),"no pref","has pref") 
+				table(AnalysisDF$nosecondpartypref) # interesting, people seem to find this easier?!
+				
+			# no preference for selected condition, captures is somebody was randomly selected into the condition where one of the two parties above was shown but did not have a pref (should be in the case in about 1/3 of these cases?)
 			
-			# distribution accross countries 
-			table(AnalysisDF$nopartypref)
-			table(AnalysisDF$country)
-			table(AnalysisDF$nopartypref,AnalysisDF$country)
-			prop.table(table(AnalysisDF$nopartypref,AnalysisDF$country),2) # quite a bit less germans (15% versus 25% in CH, with no party preference... is this representative of the population?!)
-	
+				AnalysisDF$prefincondition <- ifelse(
+													(AnalysisDF$presented_party == "Own Party" & AnalysisDF$nofirstpartypref == "no pref")
+													|
+													(AnalysisDF$presented_party == "2nd Party" & AnalysisDF$nosecondpartypref == "no pref")
+													,"no pref in selected condition","had pref in selected condition")
+			
 		# obscure party dummy
 			AnalysisDF$obscurepartydummy <- ifelse((AnalysisDF$Party == "Partei:"| AnalysisDF$Party == "Parti:"),"obscure","regular") 
 			table(AnalysisDF$obscurepartydummy)
 			table(AnalysisDF$obscurepartydummy,AnalysisDF$country)
 			prop.table(table(AnalysisDF$obscurepartydummy,AnalysisDF$country),2) # slightly more 'obscure' parties in DE
 			
+		# no party shown dummy
+			table(AnalysisDF$presented_party)
+			summary(AnalysisDF$presented_party)
+			AnalysisDF$nopartytreatment <- ifelse(AnalysisDF$presented_party == "No Party","none shown","a party was shown") 
+			table(AnalysisDF$nopartytreatment)
+			
+			table(AnalysisDF$presented_party,AnalysisDF$language)
+		
 	# get the perceived left/right party positions in that Natalie provided
-	
-		# 'party_treatment' contains the parties that respondents saw
-		table(AnalysisDF$party_treatment) # how can this be 'I don't know?!, also contains values like 'Partei:' and 'Parti:' so that can also not be correct
+
+
 		
 
+		# 'party_treatment' contains the parties that respondents saw <- I think with the fixes I implemented this is now indeed true
+		table(AnalysisDF$party_treatment) 
+		table(AnalysisDF$party_treatment,AnalysisDF$country)
+		table(AnalysisDF$party_treatment,AnalysisDF$language) 
+		# how can this be 'I don't know?!, also contains values like 'Partei:' and 'Parti:' so that can also not be correct? 
+		# --> the answer seems to be that this is 'correct'; we randomly select one of three following conditions:
+			# 1. party of first choice
+			# 2. party of second choice
+			# 3. party of third choice
+		# if however you did not have a 'second choice' party or mentioned a weird party then you can end up seing(?!) I don't know' here? <- this probalby means we should just exclude these people?!
+		
+			
+		# import the file
+			PAPO = read.csv("partypositionsDE_CH_withmatchinglabels.csv", header = TRUE, sep = ";")
+			summary(PAPO)
+			head(PAPO)
+			names(PAPO)
+			
+			head(AnalysisDF)
+			
+		# merge
+			AnalysisDF$party_treatment <- as.character(AnalysisDF$party_treatment)
+			
+			AnalysisDF$country <- as.character(AnalysisDF$country)
+			
+			PAPO$avg_pers_lmer <- as.numeric(as.character(PAPO$average_perceived_left_right_position))
+			PAPO$abv_in_survey <- as.character(PAPO$abv_in_survey)
+			PAPO$country <- as.character(PAPO$country)
+			
+			TEMP <- sqldf("
+						   SELECT AnalysisDF.*, PAPO.party_parlgov_id, PAPO.avg_pers_lmer
+						   FROM AnalysisDF LEFT JOIN PAPO
+						   ON
+							 (
+  							  AnalysisDF.party_treatment = PAPO.abv_in_survey
+							   AND 
+							  AnalysisDF.country = PAPO.country
+							  )
+						   
+						  ")
+			nrow(AnalysisDF)
+			nrow(TEMP)
+			head(TEMP)
+			AnalysisDF <- TEMP
+			
+			# inspect the results
+				summary(AnalysisDF$avg_pers_lmer)
+				table(is.na(AnalysisDF$avg_pers_lmer))
+			
+			# proper 'remaining' missing cases
+				AnalysisDF$othercases <- ifelse(AnalysisDF$obscurepartydummy == "obscure" | 
+												AnalysisDF$prefincondition == "no pref in selected condition" | 
+												AnalysisDF$nopartytreatment == "none shown",
+												"known case","other case")
+				table(AnalysisDF$othercases)
+			
+												
+				table(is.na(AnalysisDF$avg_pers_lmer),AnalysisDF$othercases)	# 619 cases left -- parties missing?
 
+				REMCAS <- AnalysisDF[which(is.na(AnalysisDF$avg_pers_lmer) & AnalysisDF$othercases == "other case"),]
+				nrow(REMCAS)
+				
+				table(REMCAS$party_treatment)
+				table(REMCAS$party_treatment,REMCAS$language)
+				
 ###########################################################################################################################################
 ############################################################ DESCRIPTIVES #################################################################
 ##########################################################################################################################################
