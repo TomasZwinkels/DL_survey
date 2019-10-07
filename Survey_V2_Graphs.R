@@ -14,6 +14,7 @@
 	#install.packages("XLConnect")
 	#install.packages("stargazer")
 	#install.packages("lme4")
+	#install.packages("merTools")
 
 	library(readxl)
 	library(dplyr)
@@ -23,6 +24,7 @@
 	library(lme4)
 	library(car)
 	library(viridis)
+	library(merTools)
 
 	#attach(PilotV1_DO_clean)
 	#attach(PilotV1_DO_clean_tomastries)
@@ -235,10 +237,22 @@
 					  geom_smooth(method=lm, aes(fill=presented_party)) +
 					  ylab("respondents self-reported left right score") +
 					  xlab("average perceived left right score for party in selects2015 and DEU2017")
-					  
-					
-					
+			
+			# lets calculcate the distance measure
+			
+				AnalysisDF$abslmerdif <- abs(AnalysisDF$left_right_scale_010 - AnalysisDF$avg_perc_lmer)
+				summary(AnalysisDF$abslmerdif)
+				hist(AnalysisDF$abslmerdif) # looks like a nice distribution
+				
 			# and set this value to zero for all of the 'known cases'
+				AnalysisDF$abslmerdifformodel <- ifelse(AnalysisDF$othercases == "known case",0,AnalysisDF$abslmerdif)
+				summary(AnalysisDF$abslmerdifformodel) # only# 321 missing
+				
+			# list of variables to take towards the model
+				#	abslmerdifformodel
+				#	obscurepartydummy
+				#	prefincondition
+				#	nopartytreatment
 				
 ###########################################################################################################################################
 ############################################################ DESCRIPTIVES #################################################################
@@ -1034,33 +1048,82 @@ table(AnalysisDF$image_check_num,AnalysisDF$image_check)
 
 # model with additional tweet characteristics
 
-model5 <- lmer(polscale~treatment_merged_num +
-               Age +
-               Gender +
-               Educ_Level +
-               I(left_right_scale_1-50) +
-               Extremism +
-               political_content +
-               Follow_Politician +
-               socialmedia_competence +
-               Gender_politician +
-               GenderMatch +
-               noleftrightmismatch +
-               nopartymismatch +
-               toomuch +
-               offset(I(betaimage*image_check_num)) +
-			   country +
-			   nopartypref +
-			   obscurepartydummy +
-			   (1|country) +
-			   (nopartymismatch|country)
-			   #(nopartymismatch|country)
-             ,data=AnalysisDF)
+	AnalysisDF$obscurepartydummy <- factor(AnalysisDF$obscurepartydummy,levels=c("regular","obscure"))
+	table(AnalysisDF$obscurepartydummy)
+	table(AnalysisDF$nopartymismatch,AnalysisDF$obscurepartydummy)
 
-summary(model5)
-coef(model5)
+	DRED <- AnalysisDF
+	# DRED <- AnalysisDF[which(!is.na(AnalysisDF$abslmerdifformodel)),]
+	
 
-stargazer(model1,model2,model3,model4,model5,type="text",intercept.bottom=FALSE)
+	model5 <- lmer(polscale~treatment_merged_num +
+				   Age +
+				   Gender +
+				   Educ_Level +
+				   I(left_right_scale_1-50) +
+				   Extremism +
+				   political_content +
+				   Follow_Politician +
+				   socialmedia_competence +
+				   Gender_politician +
+				   GenderMatch +
+				   noleftrightmismatch +
+				   nopartymismatch +
+				   toomuch +
+				   offset(I(betaimage*image_check_num)) +
+				   prefincondition +
+				   nopartytreatment +
+			#	   obscurepartydummy +
+			#	   (1|country) +
+				   (nopartymismatch|country)
+				   #(nopartymismatch|country)
+				 ,data=DRED)
+
+	summary(model5)
+	coef(model5)
+
+	stargazer(model1,model2,model3,model5,type="text",intercept.bottom=FALSE)
+
+
+# model with left-right distance on basis of positions
+	
+				# list of variables to take towards the model
+				#	abslmerdifformodel
+				#	table(AnalysisDF$obscurepartydummy) # ofcourse always has party left right position missing!
+					table(AnalysisDF$obscurepartydummy,is.na(AnalysisDF$abslmerdifformodel))
+					table(AnalysisDF$prefincondition)
+					table(AnalysisDF$nopartytreatment)
+				
+				
+	model6 <- lmer(polscale~treatment_merged_num +
+				   Age +
+				   Gender +
+				   Educ_Level +
+				   I(left_right_scale_1-50) +
+				   Extremism +
+				   political_content +
+				   Follow_Politician +
+				   socialmedia_competence +
+				   Gender_politician +
+				   GenderMatch +
+				   noleftrightmismatch +
+				   nopartymismatch +
+				   abslmerdifformodel +
+				   toomuch +
+				   offset(I(betaimage*image_check_num)) +
+				   prefincondition +
+				   nopartytreatment +
+				#   (1|country) +
+				   (nopartymismatch|country) +
+				   (abslmerdifformodel|country)
+				 ,data=DRED)
+
+	summary(model6)
+	coef(model6)
+
+	stargazer(model1,model2,model3,model5,model6,type="text",intercept.bottom=FALSE)
+	anova(model5,model6) # 
+	anova(model6,model5) # model 5 is clearly the much better fit! (when the party mismatch dummy is dropped the model really is worse).
 
 ## getting a visualisation of the model predictions
 
@@ -1207,36 +1270,6 @@ PREDAT, aes(x=treatment_merged_num, y=est,color=countrytimespartymismatch)) +
 					geom_line(aes())				
 	
 
-
-
-
-
-# adding the mentioned interactions
-
-table(AnalysisDF$treatment_merged_num)
-
-model6 <- lm(polscale~treatment_merged_num +
-               Age +
-               Gender +
-               Educ_Level +
-               I(left_right_scale_1-50) +
-               Extremism +
-               political_content +
-               Follow_Politician +
-               socialmedia_competence +
-               Gender_politician +
-               GenderMatch +
-               noleftrightmismatch +
-               nopartymismatch +
-               toomuch +
-               offset(I(betaimage*image_check_num)) +
-			   Educ_Level*treatment_merged_num +
-			   Gender*treatment_merged_num +
-			   (1|country)
-             ,data=AnalysisDF)
-
-summary(model6)
-
 # getting the random part of the model setup and in
 	
 	m1 <- model1
@@ -1244,17 +1277,17 @@ summary(model6)
 	m3 <- model3
 	#m4 <- model4
 	m5 <- model5
-
+	m6 <- model6
 
 # use bootstrapping to get a standard error for the variance estimates.
-		runconfints <- FALSE
+		runconfints <- TRUE
 		
 				indivlvar <- format(round(c(
 							as.data.frame(VarCorr(m1))$vcov[2],
 							as.data.frame(VarCorr(m2))$vcov[2],
 							as.data.frame(VarCorr(m3))$vcov[2],
-						#	as.data.frame(VarCorr(m4))$vcov[2],
-							as.data.frame(VarCorr(m5))$vcov[2]
+							as.data.frame(VarCorr(m5))$vcov[4],
+							as.data.frame(VarCorr(m6))$vcov[7]
 											),digits=3),nsmall=3)
 		
 		if (runconfints)
@@ -1263,16 +1296,16 @@ summary(model6)
 				am1 <- confint(m1,method="boot",nsim=simulations)
 				am2 <- confint(m2,method="boot",nsim=simulations)
 				am3 <- confint(m3,method="boot",nsim=simulations)
-				#am4 <- confint(m4,method="boot",nsim=simulations)
 				am5 <- confint(m5,method="boot",nsim=simulations)
+				am6 <- confint(m6,method="boot",nsim=simulations)
 
 		
 				indivlvarse <- format(round(c(
 					((am1[2,2] - am1[2,1]) / 1.98),
 					((am2[2,2] - am2[2,1]) / 1.98),
 					((am3[2,2] - am3[2,1]) / 1.98),
-					#((am4[2,2] - am4[2,1]) / 1.98),
-					((am5[2,2] - am5[2,1]) / 1.98)
+					((am5[2,2] - am5[2,1]) / 1.98),
+					((am6[2,2] - am6[2,1]) / 1.98)
 					),digits=3),nsmall=3)
 		} else {
 			indivlvarse <- rep("NE",7)
@@ -1281,8 +1314,8 @@ summary(model6)
 							as.data.frame(VarCorr(m1))$vcov[1],
 							as.data.frame(VarCorr(m2))$vcov[1],
 							as.data.frame(VarCorr(m3))$vcov[1],
-							#as.data.frame(VarCorr(m4))$vcov[1],
-							as.data.frame(VarCorr(m5))$vcov[1]
+							as.data.frame(VarCorr(m5))$vcov[1],
+							as.data.frame(VarCorr(m6))$vcov[1]
 											),digits=3),nsmall=3)
 		if (runconfints)
 		{					
@@ -1290,8 +1323,8 @@ summary(model6)
 					((am1[1,2] - am1[1,1]) / 1.98),
 					((am2[1,2] - am2[1,1]) / 1.98),
 					((am3[1,2] - am3[1,1]) / 1.98),
-					#((am4[1,2] - am4[1,1]) / 1.98),
-					((am5[1,2] - am5[1,1]) / 1.98)
+					((am5[1,2] - am5[1,1]) / 1.98),
+					((am6[1,2] - am6[1,1]) / 1.98)
 					),digits=3),nsmall=3)
 		} else {
 			countryvarse <- rep("NE",7)
@@ -1300,14 +1333,14 @@ summary(model6)
 	nobsc <-  c(nobs(m1),
 				nobs(m2),
 				nobs(m3),
-				#nobs(m4),
-				nobs(m5))
+				nobs(m5),
+				nobs(m6))
 						
 	nrofcountries <- c(sapply(ranef(m1),nrow)[1],
 							sapply(ranef(m2),nrow)[1],
 							sapply(ranef(m3),nrow)[1],
-							#sapply(ranef(m4),nrow)[1],
-							sapply(ranef(m5),nrow)[1])
+							sapply(ranef(m5),nrow)[1],
+							sapply(ranef(m6),nrow)[1])
 
 			GiveBrackets <- function(vector1)
 				{
@@ -1326,10 +1359,11 @@ summary(model6)
 		m3,
 		#m4,
 		m5,
+		m6,
 		type="text",
 		intercept.bottom=FALSE,
 		no.space=TRUE,
-		column.labels=(c("Treatment","Demographics etc","Oth. Respon.","Tweet.Char.")),
+		column.labels=(c("Treatment","Demographics etc","Oth. Respon.","Tweet.Char.","Tweet.Char+")),
 		star.char = c(".", "*", "**", "***"),
 		star.cutoffs = c(0.1, 0.05, 0.01, 0.001),
 		keep.stat=c("ll"),
