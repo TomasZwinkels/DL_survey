@@ -3,8 +3,8 @@
 
 # setup
 	#setwd("G:\\Politikwissenschaft\\Team-Bailer\\Digital Lifes\\r-scripts\\r-scripts survey")
-	setwd("C:\\Users\\suttad00\\Basel Powi Dropbox\\Adrian Sutter\\DigitalLives\\r-scripts\\r-scripts survey")
-	#setwd("C:\\Users\\turnerzw\\Basel Powi Dropbox\\Tomas Zwinkels\\DigitalLives\\r-scripts\\r-scripts survey")
+	#setwd("C:\\Users\\suttad00\\Basel Powi Dropbox\\Adrian Sutter\\DigitalLives\\r-scripts\\r-scripts survey")
+	setwd("C:\\Users\\turnerzw\\Basel Powi Dropbox\\Tomas Zwinkels\\DigitalLives\\r-scripts\\r-scripts survey")
 
 
 	#install.packages("dplyr")
@@ -13,8 +13,9 @@
 	#install.packages("sqldf")
 	#install.packages("XLConnect")
 	#install.packages("stargazer")
-	#install.packages("lme4")
+	install.packages("lme4")
 	#install.packages("merTools")
+	#install.packages("afex")
 
 	library(readxl)
 	library(dplyr)
@@ -24,7 +25,9 @@
 	library(lme4)
 	library(car)
 	library(viridis)
-	library(merTools)
+#	library(merTools)
+#	library(lmerTest)
+#	library(afex)
 
 	#attach(PilotV1_DO_clean)
 	#attach(PilotV1_DO_clean_tomastries)
@@ -901,6 +904,24 @@ AnalysisDF$leftrightgroup <- ifelse(
 
 table(AnalysisDF$leftrightgroup)
 
+####################################################################
+
+# Here, the polscale variable can temporarily manually be set to its subdimensions (upon Natalie' request).
+
+par(mfrow=c(2,3))
+hist(AnalysisDF$polscale)
+hist(AnalysisDF$suitability)
+hist(AnalysisDF$L2V)
+hist(AnalysisDF$Warmth)
+hist(AnalysisDF$Credibility)
+par(mfrow=c(1,1))
+
+	#  AnalysisDF$polscale <- AnalysisDF$suitability
+	#  AnalysisDF$polscale <- AnalysisDF$L2V
+	#  AnalysisDF$polscale <- AnalysisDF$Warmth
+	#  AnalysisDF$polscale <- AnalysisDF$Credibility
+
+
 #######################################################################################################################################
 #Building the models 
 
@@ -1068,7 +1089,7 @@ table(AnalysisDF$image_check_num,AnalysisDF$image_check)
 				   Gender_politician +
 				   GenderMatch +
 				   noleftrightmismatch +
-				   nopartymismatch +
+			#	   nopartymismatch +
 				   toomuch +
 				   offset(I(betaimage*image_check_num)) +
 				   prefincondition +
@@ -1081,6 +1102,10 @@ table(AnalysisDF$image_check_num,AnalysisDF$image_check)
 
 	summary(model5)
 	coef(model5)
+	anova(model5)
+	ranef(model5)
+	attr(ranef(model5, postVar = TRUE)[[1]], "postVar")
+	attr(ranef(model5, condVar = TRUE)[[1]], "postVar")
 
 	stargazer(model1,model2,model3,model5,type="text",intercept.bottom=FALSE)
 
@@ -1093,8 +1118,33 @@ table(AnalysisDF$image_check_num,AnalysisDF$image_check)
 					table(AnalysisDF$obscurepartydummy,is.na(AnalysisDF$abslmerdifformodel))
 					table(AnalysisDF$prefincondition)
 					table(AnalysisDF$nopartytreatment)
-				
-				
+	
+	ADFCH <- AnalysisDF[which(AnalysisDF$country == "CH"),]
+	ADFDE <- AnalysisDF[which(AnalysisDF$country == "DE"),]
+	nrow(ADFCH)
+	nrow(ADFDE)
+	
+	library(ggplot2)
+	library(ggpubr)
+	require(gridExtra)
+
+		freq_median_ch  = median(ADFCH$abslmerdifformodel,na.rm=TRUE)
+		plot1 <- ggplot(ADFCH, aes(abslmerdifformodel)) +
+		geom_histogram() +
+		labs(title="lmer distance resp. and pol. in Swisterland") +
+		geom_vline(aes(xintercept = freq_median_ch), linetype = "dashed", size = 1) +
+		geom_text(aes(x=freq_median_ch+0.2, label=round(freq_median_ch,2), y=200), colour="black", angle=0,size=5) 
+		
+		freq_median_de  = median(ADFDE$abslmerdifformodel,na.rm=TRUE)
+		plot2 <- ggplot(ADFDE, aes(abslmerdifformodel)) +
+		geom_histogram() +
+		labs(title="lmer distance resp. and pol. in Germany") +
+		geom_vline(aes(xintercept = freq_median_de), linetype = "dashed", size = 1) +
+		geom_text(aes(x=freq_median_de+0.2, label=round(freq_median_de,2), y=200), colour="black", angle=0,size=5) 
+
+
+		grid.arrange(plot1, plot2, ncol=2)
+		
 	model6 <- lmer(polscale~treatment_merged_num +
 				   Age +
 				   Gender +
@@ -1107,19 +1157,23 @@ table(AnalysisDF$image_check_num,AnalysisDF$image_check)
 				   Gender_politician +
 				   GenderMatch +
 				   noleftrightmismatch +
-				   nopartymismatch +
-				   abslmerdifformodel +
+				#   nopartymismatch +
+				#   abslmerdifformodel +
 				   toomuch +
 				   offset(I(betaimage*image_check_num)) +
 				   prefincondition +
 				   nopartytreatment +
 				#   (1|country) +
-				   (nopartymismatch|country) +
+				#   (nopartymismatch|country) +
 				   (abslmerdifformodel|country)
 				 ,data=DRED)
 
 	summary(model6)
 	coef(model6)
+#	confint(model6)
+	ranef(model6)
+	attr(ranef(model6, postVar = TRUE)[[1]], "postVar")
+
 
 	stargazer(model1,model2,model3,model5,model6,type="text",intercept.bottom=FALSE)
 	anova(model5,model6) # 
@@ -1279,6 +1333,34 @@ PREDAT, aes(x=treatment_merged_num, y=est,color=countrytimespartymismatch)) +
 	m5 <- model5
 	m6 <- model6
 
+# name replacements
+
+	specificnamecleaning <- function(dirtynamesloc)	
+			{
+				cleanernames <- gsub("treatment_merged_num","Private (low end) or Policy (high end)",dirtynamesloc,fixed=TRUE)
+				cleanernames <- gsub("Age","Age",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("GenderWeiblich","Gender (Female)",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("Educ_LevelLow","Education Level (Low)",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("Educ_LevelHigh","Education Level (High)",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("I(left_right_scale_1 - 50)","Respondent left-right score",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("Extremism","Extremism",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("political_contentJa","Seen political content (Yes)",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("political_contentweiss nicht","Seen political content (Don't know)",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("Follow_PoliticianJa","Following a politician (Yes)",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("Follow_Politicianweiss nicht","Following a politician (Don't know)",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("socialmedia_competenceintermediate","Social Media Competence (interm.)",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("Gender_politicianMale","Gender of politician (Male)",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("GenderMatchmismatch","Gender mismatch",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("noleftrightmismatchmismatch","Content left-right mismatch",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("toomuchall same","All tweets of series same style",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("prefinconditionno pref in selected condition","No party preference",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("nopartytreatmentnone shown","Shown politician without party label",cleanernames,fixed=TRUE)
+
+				return(cleanernames)
+			}
+			specificnamecleaning(dirtynames)
+
+
 # use bootstrapping to get a standard error for the variance estimates.
 		runconfints <- TRUE
 		
@@ -1286,36 +1368,34 @@ PREDAT, aes(x=treatment_merged_num, y=est,color=countrytimespartymismatch)) +
 							as.data.frame(VarCorr(m1))$vcov[2],
 							as.data.frame(VarCorr(m2))$vcov[2],
 							as.data.frame(VarCorr(m3))$vcov[2],
-							as.data.frame(VarCorr(m5))$vcov[4],
-							as.data.frame(VarCorr(m6))$vcov[7]
+							as.data.frame(VarCorr(m5))$vcov[4]
 											),digits=3),nsmall=3)
 		
 		if (runconfints)
 		{
-				simulations <- 500
+				simulations <- 50
 				am1 <- confint(m1,method="boot",nsim=simulations)
+				
 				am2 <- confint(m2,method="boot",nsim=simulations)
+				
 				am3 <- confint(m3,method="boot",nsim=simulations)
+				am5 <- am3 # temp! take the confidence intervals from the previous run by default so that the script does not crash of no ci can be calculated
 				am5 <- confint(m5,method="boot",nsim=simulations)
-				am6 <- confint(m6,method="boot",nsim=simulations)
 
-		
 				indivlvarse <- format(round(c(
 					((am1[2,2] - am1[2,1]) / 1.98),
 					((am2[2,2] - am2[2,1]) / 1.98),
 					((am3[2,2] - am3[2,1]) / 1.98),
-					((am5[2,2] - am5[2,1]) / 1.98),
-					((am6[2,2] - am6[2,1]) / 1.98)
+					((am5[2,2] - am5[2,1]) / 1.98)
 					),digits=3),nsmall=3)
 		} else {
-			indivlvarse <- rep("NE",7)
+			indivlvarse <- rep("NE",4)
 		}								
 				countryvar <- format(round(c(
 							as.data.frame(VarCorr(m1))$vcov[1],
 							as.data.frame(VarCorr(m2))$vcov[1],
 							as.data.frame(VarCorr(m3))$vcov[1],
-							as.data.frame(VarCorr(m5))$vcov[1],
-							as.data.frame(VarCorr(m6))$vcov[1]
+							as.data.frame(VarCorr(m5))$vcov[1]
 											),digits=3),nsmall=3)
 		if (runconfints)
 		{					
@@ -1323,11 +1403,10 @@ PREDAT, aes(x=treatment_merged_num, y=est,color=countrytimespartymismatch)) +
 					((am1[1,2] - am1[1,1]) / 1.98),
 					((am2[1,2] - am2[1,1]) / 1.98),
 					((am3[1,2] - am3[1,1]) / 1.98),
-					((am5[1,2] - am5[1,1]) / 1.98),
-					((am6[1,2] - am6[1,1]) / 1.98)
+					((am5[1,2] - am5[1,1]) / 1.98)
 					),digits=3),nsmall=3)
 		} else {
-			countryvarse <- rep("NE",7)
+			countryvarse <- rep("NE",4)
 		}	
 
 	nobsc <-  c(nobs(m1),
@@ -1339,8 +1418,7 @@ PREDAT, aes(x=treatment_merged_num, y=est,color=countrytimespartymismatch)) +
 	nrofcountries <- c(sapply(ranef(m1),nrow)[1],
 							sapply(ranef(m2),nrow)[1],
 							sapply(ranef(m3),nrow)[1],
-							sapply(ranef(m5),nrow)[1],
-							sapply(ranef(m6),nrow)[1])
+							sapply(ranef(m5),nrow)[1])
 
 			GiveBrackets <- function(vector1)
 				{
@@ -1353,17 +1431,17 @@ PREDAT, aes(x=treatment_merged_num, y=est,color=countrytimespartymismatch)) +
 				}
 
 
+	varlabels <- specificnamecleaning(names(fixef(m5)))
+
 	stargazer(
 		m1,
 		m2,
 		m3,
-		#m4,
 		m5,
-		m6,
-		type="text",
+		type="latex",
 		intercept.bottom=FALSE,
 		no.space=TRUE,
-		column.labels=(c("Treatment","Demographics etc","Oth. Respon.","Tweet.Char.","Tweet.Char+")),
+		column.labels=(c("Treatment","Demographics etc","Oth. Respon.","Tweet.Char.")),
 		star.char = c(".", "*", "**", "***"),
 		star.cutoffs = c(0.1, 0.05, 0.01, 0.001),
 		keep.stat=c("ll"),
@@ -1372,6 +1450,7 @@ PREDAT, aes(x=treatment_merged_num, y=est,color=countrytimespartymismatch)) +
 		label = "ObtPropRegTab",
 		caption = "Logistic regression model predicting respondents' candidate evaluation on basis of tweet style and controls",
 		dep.var.labels = c("Candidate evaluation"),
+		covariate.labels = varlabels,
 			add.lines = list(	
 							c("Random effects"),
 							c("--------------------------"),
