@@ -917,9 +917,11 @@ hist(AnalysisDF$Credibility)
 par(mfrow=c(1,1))
 
 	#  AnalysisDF$polscale <- AnalysisDF$suitability
-	#  AnalysisDF$polscale <- AnalysisDF$L2V
+	  AnalysisDF$polscale <- AnalysisDF$L2V # be aware! we are doing likilhood to vote!
 	#  AnalysisDF$polscale <- AnalysisDF$Warmth
 	#  AnalysisDF$polscale <- AnalysisDF$Credibility
+
+
 
 
 #######################################################################################################################################
@@ -1225,25 +1227,37 @@ ggplot(PREDAT, aes(x=treatment_merged_num, y=predictionsrandomslopemodel,color=c
 						
 						# non-quota factions - for Germany
 							i = 1
-							deltaMethod(model5,paste("x1+x2*",i,"+",CC[1,17],sep=""), parameterNames= paste("x", 1:length(fixef(model5)), sep=""))	
+							deltaMethod(model5,paste("x1+x2*",i,"+",CC[1,1],sep=""), parameterNames= paste("x", 1:length(fixef(model5)), sep=""))	
 							
 							resvecmatch <- vector()
+							resvecmatchlb <- vector()
+							resvecmatchub <- vector()
 							for(i in 1:10)
 							{
 								resvecmatch[i] <- deltaMethod(model5,paste("x1+x2*",i,sep=""), parameterNames= paste("x", 1:length(fixef(model5)), sep=""))[[1]]
+								resvecmatchlb
+								resvecmatchub
 							}
 							
 							DEresvecmismatch <- vector()
+							DEresvecmismatchlb <- vector()
+							DEresvecmismatchub <- vector()
 							for(i in 1:10)
 							{
-								DEresvecmismatch[i] <- deltaMethod(model5,paste("x1+x2*",i,"+",CC[1,17],sep=""), parameterNames= paste("x", 1:length(fixef(model5)), sep=""))[[1]]	
+								DEresvecmismatch[i] <- deltaMethod(model5,paste("x1+x2*",i,"+",CC[1,1],sep=""), parameterNames= paste("x", 1:length(fixef(model5)), sep=""))[[1]]	
+							
+							
 							}
 							
 
 							CHresvecmismatch <- vector()
+							CHresvecmismatchlb <- vector()
+							CHresvecmismatchup <- vector()
 							for(i in 1:10)
 							{
-								CHresvecmismatch[i] <- deltaMethod(model5,paste("x1+x2*",i,"+",CC[2,17],sep=""), parameterNames= paste("x", 1:length(fixef(model5)), sep=""))[[1]]	
+								CHresvecmismatch[i] <- deltaMethod(model5,paste("x1+x2*",i,"+",CC[2,1],sep=""), parameterNames= paste("x", 1:length(fixef(model5)), sep=""))[[1]]	
+								CHresvecmismatchlb[i]
+								CHresvecmismatchup
 							}
 							
 	# make dataframe with these results
@@ -1293,20 +1307,20 @@ PREDAT$countrytimespartymismatch <-	factor(PREDAT$countrytimespartymismatch,leve
 table(B$countrytimespartymismatch)
 
 ggplot() +
-	geom_jitter(data = PREDAT,aes(x=treatment_merged_num, y=polscale,shape=countrytimespartymismatch,color=countrytimespartymismatch),size=0.75,width = 0.15) +
+	geom_jitter(data = PREDAT,aes(x=treatment_merged_num, y=polscale,shape=countrytimespartymismatch,color=countrytimespartymismatch),size=1.5,width = 0.15) +
 	geom_line(data = B,aes(x=treatment_merged_num, y=est,color=countrytimespartymismatch),size=2.0) +
 	scale_x_discrete(name ="Treatment: private to policy", 
                     limits=seq(from=-4,to=5,by=1),
 					labels=c(111,211,311,122,123,133,222,322,233,333)
 					) +
-	scale_y_discrete(name="Candidate evaluation",
+	scale_y_discrete(name="Self-reported likelihood to vote for candidate",
 					limits=seq(from=0, to=100, by=10),
 					labels=seq(from=0, to=100, by=10)
 					) +
-	scale_color_manual(name = "Estimated evaluation scores", 
+	scale_color_manual(name = "Estimated likelihood scores", 
 						 labels = c("no party mismatch","CH party mismatch", "DE party mismatch"),
 						 values=c("deeppink4", "grey7", "grey60")) +
-	scale_shape_manual(name="Observed evaluation scores", 
+	scale_shape_manual(name="Observed likelihood scores", 
 					   labels = c("no party mismatch","CH party mismatch", "DE party mismatch"),
 					   values = c(0, 1, 2)) +
 	
@@ -1330,7 +1344,7 @@ PREDAT, aes(x=treatment_merged_num, y=est,color=countrytimespartymismatch)) +
 	m2 <- model2
 	m3 <- model3
 	#m4 <- model4
-	m5 <- model5
+	m5 <- model6
 	m6 <- model6
 
 # name replacements
@@ -1449,7 +1463,7 @@ PREDAT, aes(x=treatment_merged_num, y=est,color=countrytimespartymismatch)) +
 		font.size = "small",
 		label = "ObtPropRegTab",
 		caption = "Logistic regression model predicting respondents' candidate evaluation on basis of tweet style and controls",
-		dep.var.labels = c("Candidate evaluation"),
+		dep.var.labels = c("Likelihood to vote"),
 		covariate.labels = varlabels,
 			add.lines = list(	
 							c("Random effects"),
@@ -1462,6 +1476,18 @@ PREDAT, aes(x=treatment_merged_num, y=est,color=countrytimespartymismatch)) +
 							c("",GiveBrackets(countryvarse))
 							)
 		  )
+
+
+# and a standardised version 
+stdCoef.merMod <- function(object) {
+  sdy <- sd(getME(object,"y"))
+  sdx <- apply(getME(object,"X"), 2, sd)
+  sc <- fixef(object)*sdx/sdy
+  se.fixef <- coef(summary(object))[,"Std. Error"]
+  se <- se.fixef*sdx/sdy
+  return(data.frame(stdcoef=sc, stdse=se))
+}
+stdCoef.merMod(m5)
 
 
 #######################################################################################################################################
