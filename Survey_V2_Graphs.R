@@ -1235,8 +1235,8 @@ ggplot(PREDAT, aes(x=treatment_merged_num, y=predictionsrandomslopemodel,color=c
 							for(i in 1:10)
 							{
 								resvecmatch[i] <- deltaMethod(model5,paste("x1+x2*",i,sep=""), parameterNames= paste("x", 1:length(fixef(model5)), sep=""))[[1]]
-								resvecmatchlb
-								resvecmatchub
+								resvecmatchlb[i] <- deltaMethod(model5,paste("x1+x2*",i,sep=""), parameterNames= paste("x", 1:length(fixef(model5)), sep=""))[[3]]
+								resvecmatchub[i] <- deltaMethod(model5,paste("x1+x2*",i,sep=""), parameterNames= paste("x", 1:length(fixef(model5)), sep=""))[[4]]
 							}
 							
 							DEresvecmismatch <- vector()
@@ -1245,19 +1245,19 @@ ggplot(PREDAT, aes(x=treatment_merged_num, y=predictionsrandomslopemodel,color=c
 							for(i in 1:10)
 							{
 								DEresvecmismatch[i] <- deltaMethod(model5,paste("x1+x2*",i,"+",CC[1,1],sep=""), parameterNames= paste("x", 1:length(fixef(model5)), sep=""))[[1]]	
-							
-							
+								DEresvecmismatchlb[i] <- deltaMethod(model5,paste("x1+x2*",i,"+",CC[1,1],sep=""), parameterNames= paste("x", 1:length(fixef(model5)), sep=""))[[3]]
+								DEresvecmismatchub[i] <- deltaMethod(model5,paste("x1+x2*",i,"+",CC[1,1],sep=""), parameterNames= paste("x", 1:length(fixef(model5)), sep=""))[[4]]
 							}
 							
 
 							CHresvecmismatch <- vector()
 							CHresvecmismatchlb <- vector()
-							CHresvecmismatchup <- vector()
+							CHresvecmismatchub <- vector()
 							for(i in 1:10)
 							{
 								CHresvecmismatch[i] <- deltaMethod(model5,paste("x1+x2*",i,"+",CC[2,1],sep=""), parameterNames= paste("x", 1:length(fixef(model5)), sep=""))[[1]]	
-								CHresvecmismatchlb[i]
-								CHresvecmismatchup
+								CHresvecmismatchlb[i] <- deltaMethod(model5,paste("x1+x2*",i,"+",CC[2,1],sep=""), parameterNames= paste("x", 1:length(fixef(model5)), sep=""))[[3]]	
+								CHresvecmismatchub[i] <- deltaMethod(model5,paste("x1+x2*",i,"+",CC[2,1],sep=""), parameterNames= paste("x", 1:length(fixef(model5)), sep=""))[[4]]
 							}
 							
 	# make dataframe with these results
@@ -1265,10 +1265,13 @@ ggplot(PREDAT, aes(x=treatment_merged_num, y=predictionsrandomslopemodel,color=c
 		table(AnalysisDF$treatment_merged_num)
 	
 		est <- c(resvecmatch,resvecmatch,DEresvecmismatch,CHresvecmismatch)
+		estlb <- c(resvecmatchlb,resvecmatchlb,DEresvecmismatchlb,CHresvecmismatchlb)
+		estub <- c(resvecmatchub,resvecmatchub,DEresvecmismatchub,CHresvecmismatchub)
+		
 		type <- c(rep("no_mismatch",10),rep("no_mismatch",10),rep("mismatch",10),rep("mismatch",10))
 		treatment_merged_num <- c(seq(from=-4, to=5,by=1),seq(from=-4, to=5,by=1),seq(from=-4, to=5,by=1),seq(from=-4, to=5,by=1))
 		country = c(rep("DE",10),rep("CH",10),rep("DE",10),rep("CH",10))
-		B <- as.data.frame(cbind(est,type,treatment_merged_num,country))
+		B <- as.data.frame(cbind(est,estlb,estub,type,treatment_merged_num,country))
 
 		B$countrytimespartymismatch <- paste(B$country,B$type,sep="-")
 		table(PREDAT$countrytimespartymismatch)
@@ -1288,6 +1291,8 @@ ggplot(PREDAT, aes(x=treatment_merged_num, y=predictionsrandomslopemodel,color=c
 		table(PREDAT$countrytimespartymismatch)
 		
 		B$est <- as.numeric(as.character(B$est))
+		B$estlb <- as.numeric(as.character(B$estlb))
+		B$estub <- as.numeric(as.character(B$estub))
 		B$treatment_merged_num <- as.numeric(as.character(B$treatment_merged_num))
 		B
 
@@ -1307,8 +1312,11 @@ PREDAT$countrytimespartymismatch <-	factor(PREDAT$countrytimespartymismatch,leve
 table(B$countrytimespartymismatch)
 
 ggplot() +
-	geom_jitter(data = PREDAT,aes(x=treatment_merged_num, y=polscale,shape=countrytimespartymismatch,color=countrytimespartymismatch),size=1.5,width = 0.15) +
+	geom_jitter(data = PREDAT,aes(x=treatment_merged_num, y=polscale,color=countrytimespartymismatch),size=1.25,width = 0.15) +
 	geom_line(data = B,aes(x=treatment_merged_num, y=est,color=countrytimespartymismatch),size=2.0) +
+	geom_line(data = B,aes(x=treatment_merged_num, y=estlb,color=countrytimespartymismatch),size=1.0,linetype="dashed") +
+	geom_line(data = B,aes(x=treatment_merged_num, y=estub,color=countrytimespartymismatch),size=1.0,linetype="dashed") +
+	geom_ribbon(data = B, aes(x=treatment_merged_num,ymin=estlb,ymax=estub,fill=countrytimespartymismatch,alpha="0.9")) +
 	scale_x_discrete(name ="Treatment: private to policy", 
                     limits=seq(from=-4,to=5,by=1),
 					labels=c(111,211,311,122,123,133,222,322,233,333)
@@ -1319,7 +1327,10 @@ ggplot() +
 					) +
 	scale_color_manual(name = "Estimated likelihood scores", 
 						 labels = c("no party mismatch","CH party mismatch", "DE party mismatch"),
-						 values=c("deeppink4", "grey7", "grey60")) +
+						 values=c("darkgrey", "darkblue", "darkgreen")) + #values=c("deeppink4", "grey7", "grey60")) +
+	scale_fill_manual(name = "Estimated likelihood scores", 
+						 labels = c("no party mismatch","CH party mismatch", "DE party mismatch"),
+						 values=c("darkgrey", "darkblue", "darkgreen")) + #values=c("deeppink4", "grey7", "grey60")) +
 	scale_shape_manual(name="Observed likelihood scores", 
 					   labels = c("no party mismatch","CH party mismatch", "DE party mismatch"),
 					   values = c(0, 1, 2)) +
@@ -1461,7 +1472,7 @@ PREDAT, aes(x=treatment_merged_num, y=est,color=countrytimespartymismatch)) +
 		keep.stat=c("ll"),
 		omit.stat=c("aic","bic"),
 		font.size = "small",
-		label = "ObtPropRegTab",
+		label = "RegTab",
 		caption = "Logistic regression model predicting respondents' candidate evaluation on basis of tweet style and controls",
 		dep.var.labels = c("Likelihood to vote"),
 		covariate.labels = varlabels,
