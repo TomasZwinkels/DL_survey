@@ -13,7 +13,7 @@
 	#install.packages("sqldf")
 	#install.packages("XLConnect")
 	#install.packages("stargazer")
-	install.packages("lme4")
+	#install.packages("lme4")
 	#install.packages("merTools")
 	#install.packages("afex")
 
@@ -1080,22 +1080,24 @@ table(AnalysisDF$image_check_num,AnalysisDF$image_check)
 	
 
 	model5 <- lmer(polscale~treatment_merged_num +
+				   treatment_merged_num*Educ_Level +
 				   Age +
 				   Gender +
 				   Educ_Level +
 				   I(left_right_scale_1-50) +
 				   Extremism +
-				   political_content +
-				   Follow_Politician +
-				   socialmedia_competence +
-				   Gender_politician +
-				   GenderMatch +
+			#	   political_content +
+			#	   Follow_Politician +
+			#	   socialmedia_competence +
+			#	   Gender_politician +
+			#	   GenderMatch +
 				   noleftrightmismatch +
 			#	   nopartymismatch +
 				   toomuch +
 				   offset(I(betaimage*image_check_num)) +
 				   prefincondition +
 				   nopartytreatment +
+			#	   language +
 			#	   obscurepartydummy +
 			#	   (1|country) +
 				   (nopartymismatch|country)
@@ -1463,7 +1465,7 @@ PREDAT, aes(x=treatment_merged_num, y=est,color=countrytimespartymismatch)) +
 		m2,
 		m3,
 		m5,
-		type="latex",
+		type="text",
 		intercept.bottom=FALSE,
 		no.space=TRUE,
 		column.labels=(c("Treatment","Demographics etc","Oth. Respon.","Tweet.Char.")),
