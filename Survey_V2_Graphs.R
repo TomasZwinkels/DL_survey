@@ -25,6 +25,7 @@
 	library(lme4)
 	library(car)
 	library(viridis)
+	library(stargazer)
 #	library(merTools)
 #	library(lmerTest)
 #	library(afex)
@@ -390,6 +391,23 @@ AnalysisDF$Treatment_simple[which(AnalysisDF$Treatment_simple == "female_123_rig
 AnalysisDF$Treatment_simple[which(AnalysisDF$Treatment_simple == "male_311_right")] <- "right_treatment"
 AnalysisDF$Treatment_simple[which(AnalysisDF$Treatment_simple == "female_311_image_right")] <- "right_treatment"
 AnalysisDF$Treatment_simple[which(AnalysisDF$Treatment_simple == "male_133_right")] <- "right_treatment"
+
+# no ideology
+AnalysisDF$Treatment_simple[which(AnalysisDF$Treatment_simple == "female_111")] <- "neutral"
+AnalysisDF$Treatment_simple[which(AnalysisDF$Treatment_simple == "female_111_image")] <- "neutral"
+AnalysisDF$Treatment_simple[which(AnalysisDF$Treatment_simple == "female_122")] <- "neutral"
+AnalysisDF$Treatment_simple[which(AnalysisDF$Treatment_simple == "female_211")] <- "neutral"
+AnalysisDF$Treatment_simple[which(AnalysisDF$Treatment_simple == "female_211_image")] <- "neutral"
+AnalysisDF$Treatment_simple[which(AnalysisDF$Treatment_simple == "female_222")] <- "neutral"
+AnalysisDF$Treatment_simple[which(AnalysisDF$Treatment_simple == "female_311_image")] <- "neutral"
+AnalysisDF$Treatment_simple[which(AnalysisDF$Treatment_simple == "female_311_right_image")] <- "neutral"
+AnalysisDF$Treatment_simple[which(AnalysisDF$Treatment_simple == "male_111")] <- "neutral"
+AnalysisDF$Treatment_simple[which(AnalysisDF$Treatment_simple == "male_111_image")] <- "neutral"
+AnalysisDF$Treatment_simple[which(AnalysisDF$Treatment_simple == "male_122")] <- "neutral"
+AnalysisDF$Treatment_simple[which(AnalysisDF$Treatment_simple == "male_123")] <- "neutral"
+AnalysisDF$Treatment_simple[which(AnalysisDF$Treatment_simple == "male_211")] <- "neutral"
+AnalysisDF$Treatment_simple[which(AnalysisDF$Treatment_simple == "male_211_image")] <- "neutral"
+AnalysisDF$Treatment_simple[which(AnalysisDF$Treatment_simple == "male_222")] <- "neutral"
 
 table(AnalysisDF$Treatment_simple)
 
@@ -921,162 +939,194 @@ par(mfrow=c(1,1))
 	#  AnalysisDF$polscale <- AnalysisDF$Warmth
 	#  AnalysisDF$polscale <- AnalysisDF$Credibility
 
-
-
-
 #######################################################################################################################################
-#Building the models 
 
-AnalysisDF$treatment_merged_num <- as.numeric(AnalysisDF$treatment_merged) - 5
-AnalysisDF$treatment_merged_num_010 <- as.numeric(AnalysisDF$treatment_merged)
-AnalysisDF$toomuch <- ifelse(AnalysisDF$treatment_merged == "111" | AnalysisDF$treatment_merged == "222" |AnalysisDF$treatment_merged == "333","all same","not all same")
-AnalysisDF$toomuch <- factor(AnalysisDF$toomuch, levels = c("not all same", "all same"))
-
-AnalysisDF$noleftrightmismatch <- factor(AnalysisDF$noleftrightmismatch, levels = c("no_mismatch", "mismatch"))
-AnalysisDF$nopartymismatch <- factor(AnalysisDF$nopartymismatch, levels = c("no_mismatch", "mismatch"))
-table(AnalysisDF$image_check)
-
-model1 <- lmer(polscale~treatment_merged_num +
-			  (1|country)
-             ,data=AnalysisDF)
-
-summary(model1)
-library(stargazer)
-stargazer(model1,type="text",covariate.labels = c("Treatments","All treatments same", "Image yes", "left-right mismatch"," Party mismatch"))
-sd(noimages_noideologyDF$polscale)
-
-AnalysisDF$Educ_Level <- factor(AnalysisDF$Educ_Level,levels = c("Middle", "Low", "High"))
-
-table(country)
-AnalysisDF$country <- factor(AnalysisDF$country,levels = c("DE", "CH"))
-
-
-
-#demographics
-model2 <- lmer(polscale~treatment_merged_num +
-               Age +
-               Gender +
-               Educ_Level +
-			   (1|country)
-             ,data=AnalysisDF)
-
-summary(model2)
-library(stargazer)
-stargazer(model1,model2,type="text")
-#anova(model1,model2)
-
-AnalysisDF$Follow_Politician <- factor(AnalysisDF$Follow_Politician,levels = c("Nein", "Ja", "weiss nicht"))
-AnalysisDF$political_content <- factor(AnalysisDF$political_content,levels = c("Nein", "Ja", "weiss nicht"))
-
-#demographics + other participant characteristics
-model3 <- lmer(polscale~treatment_merged_num +
-               Age +
-               Gender +
-               Educ_Level +
-               I(left_right_scale_1-50) +
-               Extremism +
-               political_content +
-               Follow_Politician +
-               socialmedia_competence +
-			   (1|country)
-             ,data=AnalysisDF)
-
-summary(model3)
-library(stargazer)
-stargazer(model1,model2,model3,type="text")
-#anova(model1,model2)
-
-   
-#model with matches/mismatches
-
-model4 <- lmer(polscale~treatment_merged_num +
-               Age +
-               Gender +
-               Educ_Level +
-               I(left_right_scale_1-50) +
-               Extremism +
-               political_content +
-               Follow_Politician +
-               socialmedia_competence +
-               Gender_politician +
-               GenderMatch +
-               noleftrightmismatch +
-               nopartymismatch +
-			   (1|country)
-             ,data=AnalysisDF)
-
-summary(model4)
-library(stargazer)
-stargazer(model1,model2,model3,model4,type="text")
-
-
-#model 4b
-
-#model with matches/mismatches
-
-model4b <- lmer(polscale~treatment_merged_num +
-               Age +
-               Gender +
-               Educ_Level +
-               I(left_right_scale_1-50) +
-               Extremism +
-               political_content +
-               Follow_Politician +
-               socialmedia_competence +
-               Gender_politician +
-               GenderMatch +
-               noleftrightmismatch *nopartymismatch +
-			   (1|country)
-             ,data=AnalysisDF)
-
-summary(model4b)
-library(stargazer)
-stargazer(model1,model2,model3,model4,model4b,type="text")
-#anova(model1,model3)
-
-## estimate the effect of there being an image
-
-	table(AnalysisDF$treatment_merged)
-	table(AnalysisDF$treatment_merged,AnalysisDF$image_check)
-
-	AnalysisDFOnlyPersonal <- AnalysisDF[which(AnalysisDF$treatment_merged == "111"|AnalysisDF$treatment_merged == "211"|AnalysisDF$treatment_merged == "311"),]
-	nrow(AnalysisDFOnlyPersonal)
-	sum(table(AnalysisDF$treatment_merged,AnalysisDF$image_check)[1:3,]) # check!
-
-	AnalysisDFOnlyPersonal$image_check <- factor(AnalysisDFOnlyPersonal$image_check ,levels=c("no_image","image"))
-
-	modelimage <- lm(polscale~treatment_merged_num +
-				   Age +
-				   Gender +
-				   Educ_Level +
-				   I(left_right_scale_1-50) +
-				   Extremism +
-				   political_content +
-				   Follow_Politician +
-				   socialmedia_competence +
-				   Gender_politician +
-				   GenderMatch +
-				   noleftrightmismatch +
-				   nopartymismatch +
-				   toomuch +
-				   image_check,
-				 ,data=AnalysisDFOnlyPersonal)
-	summary(modelimage)
-
-	coef(modelimage)
-	betaimage <- coef(modelimage)[which(names(coef(modelimage)) == "image_checkimage")]
-
-AnalysisDF$image_check_num <- ifelse(AnalysisDF$image_check == "image",1,0)
-table(AnalysisDF$image_check_num,AnalysisDF$image_check)
-
-# model with additional tweet characteristics
+### regression model cutoffs!
+if(FALSE)
+{
 
 	AnalysisDF$obscurepartydummy <- factor(AnalysisDF$obscurepartydummy,levels=c("regular","obscure"))
 	table(AnalysisDF$obscurepartydummy)
 	table(AnalysisDF$nopartymismatch,AnalysisDF$obscurepartydummy)
 
-	DRED <- AnalysisDF
+	# DRED <- AnalysisDF
 	# DRED <- AnalysisDF[which(!is.na(AnalysisDF$abslmerdifformodel)),]
+
+}
+
+
+
+####Building the models 
+
+	# Preparing the private to policy scale as a centered variable
+		AnalysisDF$treatment_merged_num <- as.numeric(AnalysisDF$treatment_merged) - 5
+		AnalysisDF$treatment_merged_num_010 <- as.numeric(AnalysisDF$treatment_merged)
+		
+	# setting some other variable that are derived from the private to policy scale
+		AnalysisDF$toomuch <- ifelse(AnalysisDF$treatment_merged == "111" | AnalysisDF$treatment_merged == "222" |AnalysisDF$treatment_merged == "333","all same","not all same")
+		AnalysisDF$toomuch <- factor(AnalysisDF$toomuch, levels = c("not all same", "all same"))
+
+	# ordering some of the levels (can maybe be moved down later).
+		AnalysisDF$noleftrightmismatch <- factor(AnalysisDF$noleftrightmismatch, levels = c("no_mismatch", "mismatch"))
+		AnalysisDF$nopartymismatch <- factor(AnalysisDF$nopartymismatch, levels = c("no_mismatch", "mismatch"))
+		AnalysisDF$country <- factor(AnalysisDF$country,levels = c("DE", "CH"))
+		AnalysisDF$Educ_Level <- factor(AnalysisDF$Educ_Level,levels = c("Middle", "Low", "High"))
+		
+		AnalysisDF$Treatment_simple <- factor(AnalysisDF$Treatment_simple,levels = c("neutral", "left_treatment", "right_treatment"))
+		
+### an empty model ~~~~~~
+	model0 <- lmer(polscale~1 +
+				  (1|country)
+				 ,data=AnalysisDF)
+	summary(model0)
+
+#### treatment only ~~~~~~
+	model1 <- lmer(polscale~treatment_merged_num +
+				  (1|country)
+				 ,data=AnalysisDF)
+
+	summary(model1)
+	
+	stargazer(model0, model1,type="text")
+
+
+#### adding tweet series characteristics ~~~~~
+
+	# note that not relevant / significant variables are commented out for the main version of the table
+	# treatment [check]
+	# politician its gender [check]
+	# tweet left of right leaning [check]
+	# all tweets of series in the same style [check]
+	# shown politician without party label [check]
+	
+		
+		## estimating the effect of there being an image (we need the valye from this model in the rest of the models!)
+
+			table(AnalysisDF$treatment_merged)
+			table(AnalysisDF$treatment_merged,AnalysisDF$image_check)
+
+			AnalysisDFOnlyPersonal <- AnalysisDF[which(AnalysisDF$treatment_merged == "111"|AnalysisDF$treatment_merged == "211"|AnalysisDF$treatment_merged == "311"),]
+			nrow(AnalysisDFOnlyPersonal)
+			sum(table(AnalysisDF$treatment_merged,AnalysisDF$image_check)[1:3,]) # check!
+
+			AnalysisDFOnlyPersonal$image_check <- factor(AnalysisDFOnlyPersonal$image_check ,levels=c("no_image","image"))
+			table(AnalysisDFOnlyPersonal$image_check)
+			
+			modelimage <- lm(polscale~treatment_merged_num + # update model to final model later!
+						   Age +
+						   Gender +
+						   Educ_Level +
+						   I(left_right_scale_1-50) +
+						   Extremism +
+						   political_content +
+						   Follow_Politician +
+						   socialmedia_competence +
+						   Gender_politician +
+						   GenderMatch +
+						   noleftrightmismatch +
+						   nopartymismatch +
+						   toomuch +
+						   image_check,
+						 ,data=AnalysisDFOnlyPersonal)
+			summary(modelimage)
+
+			coef(modelimage)
+			betaimage <- coef(modelimage)[which(names(coef(modelimage)) == "image_checkimage")]
+	
+			AnalysisDF$image_check_num <- ifelse(AnalysisDF$image_check == "image",1,0)
+			table(AnalysisDF$image_check_num,AnalysisDF$image_check)
+	
+	# and continuing with the actual core model!
+	model2 <- lmer(polscale~treatment_merged_num +
+				#	Gender_politician +
+					Treatment_simple +
+					toomuch +
+					nopartytreatment +
+					offset(I(betaimage*image_check_num)) + # don't forget the manually include this in the final model!
+				   (1|country)
+				  ,data=AnalysisDF)
+				 
+	summary(model2)
+	
+	stargazer(model0, model1, model2 ,type="text")
+	
+
+#### adding the match characteristics ~~~
+
+	## in general
+		model3a <- lmer(polscale~treatment_merged_num +
+					#	Gender_politician +
+						Treatment_simple +
+						toomuch +
+						nopartytreatment +
+						offset(I(betaimage*image_check_num)) + # don't forget the manually include this in the final model!
+						nopartymismatch +
+						noleftrightmismatch + # we loose cases on the left/right mismatch! <<<<<< investigate this soon and give it its own commit! >>>>>>
+						GenderMatch +
+					   (1|country)
+					  ,data=AnalysisDF)
+					 
+		summary(model3a)
+		
+		stargazer(model0, model1, model2, model3a ,type="text")
+	
+	
+	## and country specific
+	
+		model3b <- lmer(polscale~treatment_merged_num +
+					#	Gender_politician +
+						Treatment_simple +
+						toomuch +
+						nopartytreatment +
+						offset(I(betaimage*image_check_num)) + # don't forget the manually include this in the final model output!
+						# nopartymismatch +
+						noleftrightmismatch +
+					   (nopartymismatch|country) + # don't forget the manually include this in the final model output!
+					    GenderMatch +
+					   (1|country)
+					  ,data=AnalysisDF)
+					 
+		summary(model3b)
+		ranef(model3b) # this is what you can take the beta-estimates from
+		attr(ranef(model5, condVar = TRUE)[[1]], "postVar") # estimated standard errors are the values on the bottom right
+
+		stargazer(model0, model1, model2, model3b ,type="text")
+
+# adding all respondent characteristics ~~~~
+
+	# some variable preparation
+		AnalysisDF$Follow_Politician <- factor(AnalysisDF$Follow_Politician,levels = c("Nein", "Ja", "weiss nicht"))
+		AnalysisDF$political_content <- factor(AnalysisDF$political_content,levels = c("Nein", "Ja", "weiss nicht"))
+
+	model4 <- lmer(polscale~treatment_merged_num +
+					#	Gender_politician +
+						Treatment_simple +
+						toomuch +
+						nopartytreatment +
+						offset(I(betaimage*image_check_num)) + # don't forget the manually include this in the final model output!
+						# nopartymismatch +
+						noleftrightmismatch +
+					    (nopartymismatch|country) + # don't forget the manually include this in the final model output!
+						GenderMatch +
+					#   Age +
+						Gender + # no cases dropped here
+						Educ_Level + # 20 cases lost here
+						I(left_right_scale_1-50) + # 32 additional cases lost here
+					#	Extremism +
+					#   political_content +
+					#	Follow_Politician +
+					#	socialmedia_competence +
+					#	language +
+					   (1|country)
+					  ,data=AnalysisDF)
+					 
+		summary(model4) # BE AWARE OF CONVERGENCE OR SINGULARITY WARNINGS
+		ranef(model4) # this is what you can take the beta-estimates from
+		attr(ranef(model4, condVar = TRUE)[[1]], "postVar") # estimated standard errors are the values on the bottom right
+
+		stargazer(model0, model1, model2, model3b, model4, type="text")
+	
+	
 	
 
 	model5 <- lmer(polscale~treatment_merged_num +
@@ -1112,6 +1162,103 @@ table(AnalysisDF$image_check_num,AnalysisDF$image_check)
 	attr(ranef(model5, condVar = TRUE)[[1]], "postVar")
 
 	stargazer(model1,model2,model3,model5,type="text",intercept.bottom=FALSE)
+
+
+
+model4 <- lmer(polscale~treatment_merged_num +
+               Age +
+               Gender +
+               Educ_Level +
+               I(left_right_scale_1-50) +
+               Extremism +
+               political_content +
+               Follow_Politician +
+               socialmedia_competence +
+               Gender_politician +
+               GenderMatch +
+               noleftrightmismatch +
+               nopartymismatch +
+			   (1|country)
+             ,data=AnalysisDF)
+
+summary(model4)
+library(stargazer)
+stargazer(model1,model2,model3,model4,type="text")
+
+
+
+
+
+
+#demographics
+model2 <- lmer(polscale~treatment_merged_num +
+               Age +
+               Gender +
+               Educ_Level +
+			   (1|country)
+             ,data=AnalysisDF)
+
+summary(model2)
+library(stargazer)
+stargazer(model1,model2,type="text")
+#anova(model1,model2)
+
+
+
+#demographics + other participant characteristics
+model3 <- lmer(polscale~treatment_merged_num +
+               Age +
+               Gender +
+               Educ_Level +
+               I(left_right_scale_1-50) +
+               Extremism +
+               political_content +
+               Follow_Politician +
+               socialmedia_competence +
+			   (1|country)
+             ,data=AnalysisDF)
+
+summary(model3)
+library(stargazer)
+stargazer(model1,model2,model3,type="text")
+#anova(model1,model2)
+
+   
+#model with matches/mismatches
+
+
+
+
+#model 4b
+
+#model with matches/mismatches
+
+model4b <- lmer(polscale~treatment_merged_num +
+               Age +
+               Gender +
+               Educ_Level +
+               I(left_right_scale_1-50) +
+               Extremism +
+               political_content +
+               Follow_Politician +
+               socialmedia_competence +
+               Gender_politician +
+               GenderMatch +
+               noleftrightmismatch *nopartymismatch +
+			   (1|country)
+             ,data=AnalysisDF)
+
+summary(model4b)
+library(stargazer)
+stargazer(model1,model2,model3,model4,model4b,type="text")
+#anova(model1,model3)
+
+
+
+
+# model with additional tweet characteristics
+
+
 
 
 # model with left-right distance on basis of positions
@@ -1182,6 +1329,7 @@ table(AnalysisDF$image_check_num,AnalysisDF$image_check)
 	stargazer(model1,model2,model3,model5,model6,type="text",intercept.bottom=FALSE)
 	anova(model5,model6) # 
 	anova(model6,model5) # model 5 is clearly the much better fit! (when the party mismatch dummy is dropped the model really is worse).
+
 
 ## getting a visualisation of the model predictions
 
@@ -1338,10 +1486,6 @@ ggplot() +
 					   values = c(0, 1, 2)) +
 	
 	my_theme 
-	
-
-	
-	
 	
 	table(PREDAT$treatment_merged_num)
 	
