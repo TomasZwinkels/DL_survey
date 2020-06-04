@@ -54,6 +54,9 @@
 		AnalysisDF <- DF[varstotake]
 		head(AnalysisDF)
 		summary(AnalysisDF)
+		
+	# lets also add an identifier
+		AnalysisDF$id <- seq(from=1,to=nrow(AnalysisDF),by=1)
 
 	# get dummies that indicate thar respodents did not have a party preference or a preference for an obscure party
 		
@@ -1067,7 +1070,7 @@ if(FALSE)
 	
 	# and continuing with the actual core model!
 	model2 <- lmer(polscale~treatment_merged_num +
-				#	Gender_politician +
+				#	Gender_politician + # drop in main
 					Treatment_simple +
 					toomuch +
 					nopartytreatment +
@@ -1084,7 +1087,7 @@ if(FALSE)
 
 	## in general
 		model3a <- lmer(polscale~treatment_merged_num +
-					#	Gender_politician +
+					#	Gender_politician + # drop in main
 						Treatment_simple +
 						toomuch +
 						nopartytreatment +
@@ -1103,7 +1106,7 @@ if(FALSE)
 	## and country specific
 	
 		model3b <- lmer(polscale~treatment_merged_num +
-					#	Gender_politician +
+					#	Gender_politician + # drop in main
 						Treatment_simple +
 						toomuch +
 						nopartytreatment +
@@ -1117,7 +1120,7 @@ if(FALSE)
 					 
 		summary(model3b)
 		ranef(model3b) # this is what you can take the beta-estimates from
-		attr(ranef(model5, condVar = TRUE)[[1]], "postVar") # estimated standard errors are the values on the bottom right
+		attr(ranef(model3b, condVar = TRUE)[[1]], "postVar") # estimated standard errors are the values on the bottom right
 
 		stargazer(model0, model1, model2, model3b ,type="text")
 
@@ -1126,9 +1129,10 @@ if(FALSE)
 	# some variable preparation
 		AnalysisDF$Follow_Politician <- factor(AnalysisDF$Follow_Politician,levels = c("Nein", "Ja", "weiss nicht"))
 		AnalysisDF$political_content <- factor(AnalysisDF$political_content,levels = c("Nein", "Ja", "weiss nicht"))
+		AnalysisDF$language <- factor(AnalysisDF$language,levels = c("DE-DE", "CH-DE", "CH-FR"))
 
 	model4 <- lmer(polscale~treatment_merged_num +
-					#	Gender_politician +
+					#	Gender_politician + # drop in main
 						Treatment_simple +
 						toomuch +
 						nopartytreatment +
@@ -1137,15 +1141,16 @@ if(FALSE)
 						noleftrightmismatch +
 					    (nopartymismatch|country) + # don't forget the manually include this in the final model output!
 						GenderMatch +
-					#   Age +
+					#   Age + # drop in main
 						Gender + 
 						Educ_Level + 
-						I(left_right_scale_1-50) + # 32 additional cases lost here
-					#	Extremism +
-					#   political_content +
-					#	Follow_Politician +
-					#	socialmedia_competence +
-					#	language +
+						I(left_right_scale_1-50) + # 32 additional cases where lost here
+					#	Extremism + # drop in main 
+					#   political_content + # drop in main
+					#	Follow_Politician + # drop in main
+					#	socialmedia_competence + # drop in main
+					#	language + # drop in main
+					#	country + # to check if there are baseline country differences, there are not
 					   (1|country)
 					  ,data=AnalysisDF)
 					 
@@ -1154,8 +1159,6 @@ if(FALSE)
 		attr(ranef(model4, condVar = TRUE)[[1]], "postVar") # estimated standard errors are the values on the bottom right
 
 		stargazer(model0, model1, model2, model3b, model4, type="text")
-	
-	
 	
 	
 	
@@ -1195,27 +1198,26 @@ if(FALSE)
 		grid.arrange(plot1, plot2, ncol=2)
 		
 	model6 <- lmer(polscale~treatment_merged_num +
-				   Age +
-				   Gender +
-				   Educ_Level +
-				   I(left_right_scale_1-50) +
-				   Extremism +
-				   political_content +
-				   Follow_Politician +
-				   socialmedia_competence +
-				   Gender_politician +
-				   GenderMatch +
-				   noleftrightmismatch +
-				#   nopartymismatch +
-				#   abslmerdifformodel +
+				   Treatment_simple +
 				   toomuch +
-				   offset(I(betaimage*image_check_num)) +
-				   prefincondition +
 				   nopartytreatment +
-				#   (1|country) +
-				#   (nopartymismatch|country) +
+				   offset(I(betaimage*image_check_num)) + # don't forget the manually include this in the final model output!
+				   # nopartymismatch + # is include as a country specific effect!
+				   noleftrightmismatch +
+				   GenderMatch +
+				   #   Age +
+						Gender + 
+						Educ_Level + 
+						I(left_right_scale_1-50) + # 32 additional cases lost here
+					#	Extremism +
+					#   political_content +
+					#	Follow_Politician +
+					#	socialmedia_competence +
+					#	language +
+				#   (nopartymismatch|country) + # should not be included, because we are now doing a much more gradual party mismatch
 				   (abslmerdifformodel|country)
-				 ,data=DRED)
+				#	   (1|country)  
+				 ,data=AnalysisDF)
 
 	summary(model6)
 	coef(model6)
@@ -1238,9 +1240,9 @@ PREDAT <- AnalysisDF[which(!is.na(AnalysisDF$polscale) &
 							!is.na(AnalysisDF$Educ_Level) & 
 							!is.na(AnalysisDF$left_right_scale_1) & 
 							!is.na(AnalysisDF$Extremism) & 
-							!is.na(AnalysisDF$political_content) & 
-							!is.na(AnalysisDF$Follow_Politician) & 
-							!is.na(AnalysisDF$socialmedia_competence) & 
+						# !is.na(AnalysisDF$political_content) & 
+						# !is.na(AnalysisDF$Follow_Politician) & 
+						# !is.na(AnalysisDF$socialmedia_competence) & 
 							!is.na(AnalysisDF$Gender_politician) & 
 							!is.na(AnalysisDF$GenderMatch) & 
 							!is.na(AnalysisDF$noleftrightmismatch) & 
@@ -1250,62 +1252,77 @@ PREDAT <- AnalysisDF[which(!is.na(AnalysisDF$polscale) &
 							!is.na(AnalysisDF$country) 
 							),]
 				nrow(PREDAT)
+				nrow(AnalysisDF) # who are the eight dropped cases?
+				head(AnalysisDF)
+				
+				AnalysisDF[which(!AnalysisDF$id %in% PREDAT$id),] # looks like the missingness comes from the social media variables, so I am commenting these out now because we do not use them anyways
 
-PREDAT$predictionsrandomslopemodel <- predict(model5)
+PREDAT$predictionsrandomslopemodel <- predict(model4)
 
 PREDAT$countrytimespartymismatch <- paste(PREDAT$country,PREDAT$nopartymismatch,sep="-")
 table(PREDAT$countrytimespartymismatch)
 
-ggplot(PREDAT, aes(x=treatment_merged_num, y=polscale,color=countrytimespartymismatch)) +
+# observed
+plotA <- ggplot(PREDAT, aes(x=treatment_merged_num, y=polscale,color=countrytimespartymismatch)) +
 					geom_jitter(size=0.75) + 
-					geom_smooth(method = lm, se = TRUE) 
+					geom_smooth(method = lm, se = TRUE) +
+					ylim(0,100) +
+					ggtitle("Observed")
 
-ggplot(PREDAT, aes(x=treatment_merged_num, y=predictionsrandomslopemodel,color=countrytimespartymismatch)) +
+# predicted
+plotB <- ggplot(PREDAT, aes(x=treatment_merged_num, y=predictionsrandomslopemodel,color=countrytimespartymismatch)) +
 					geom_jitter(size=0.75) + 
-					geom_smooth(method = lm, se = TRUE) 
+					geom_smooth(method = lm, se = TRUE) +
+					ylim(0,100) +
+					ggtitle("Predicted")
+					
+grid.arrange(plotA, plotB, ncol=2) # hmm, we can see here that the model is estimating way to low variation? I guess that is the point of what an R squared does?
 
 
 # and when we manually calculcate the regression lines (lets use the observed values as the dots here)
 	
 		# delta method
-						cbind(fixef(model5),seq(from=1,to=length(fixef(model5)),by=1))
-						length(fixef(model5))
+						# used to get the fixed effects from
+						cbind(fixef(model4),seq(from=1,to=length(fixef(model4)),by=1))
+						length(fixef(model4))
 						
-						CC <- as.matrix(coef(model5)$country)
+						# used the get the random effects from the model
+						CC <- as.matrix(coef(model4)$country)
+						CC
 						
-						# non-quota factions - for Germany
 							i = 1
-							deltaMethod(model5,paste("x1+x2*",i,"+",CC[1,1],sep=""), parameterNames= paste("x", 1:length(fixef(model5)), sep=""))	
-							
+							deltaMethod(model4,paste("x1+x2*",i,"+",CC[1,1],sep=""), parameterNames= paste("x", 1:length(fixef(model4)), sep=""))	# does this take into account the uncertainty / standard error of the random effect? Probably not yet 100% correct like this thus?
+						
+						# No mismatch
 							resvecmatch <- vector()
 							resvecmatchlb <- vector()
 							resvecmatchub <- vector()
 							for(i in 1:10)
 							{
-								resvecmatch[i] <- deltaMethod(model5,paste("x1+x2*",i,sep=""), parameterNames= paste("x", 1:length(fixef(model5)), sep=""))[[1]]
-								resvecmatchlb[i] <- deltaMethod(model5,paste("x1+x2*",i,sep=""), parameterNames= paste("x", 1:length(fixef(model5)), sep=""))[[3]]
-								resvecmatchub[i] <- deltaMethod(model5,paste("x1+x2*",i,sep=""), parameterNames= paste("x", 1:length(fixef(model5)), sep=""))[[4]]
+								resvecmatch[i] <- deltaMethod(model4,paste("x1+x2*",i,sep=""), parameterNames= paste("x", 1:length(fixef(model4)), sep=""))[[1]]
+								resvecmatchlb[i] <- deltaMethod(model4,paste("x1+x2*",i,sep=""), parameterNames= paste("x", 1:length(fixef(model4)), sep=""))[[3]]
+								resvecmatchub[i] <- deltaMethod(model4,paste("x1+x2*",i,sep=""), parameterNames= paste("x", 1:length(fixef(model4)), sep=""))[[4]]
 							}
-							
+						# Mismatch in Germany 	
 							DEresvecmismatch <- vector()
 							DEresvecmismatchlb <- vector()
 							DEresvecmismatchub <- vector()
 							for(i in 1:10)
 							{
-								DEresvecmismatch[i] <- deltaMethod(model5,paste("x1+x2*",i,"+",CC[1,1],sep=""), parameterNames= paste("x", 1:length(fixef(model5)), sep=""))[[1]]	
-								DEresvecmismatchlb[i] <- deltaMethod(model5,paste("x1+x2*",i,"+",CC[1,1],sep=""), parameterNames= paste("x", 1:length(fixef(model5)), sep=""))[[3]]
-								DEresvecmismatchub[i] <- deltaMethod(model5,paste("x1+x2*",i,"+",CC[1,1],sep=""), parameterNames= paste("x", 1:length(fixef(model5)), sep=""))[[4]]
+								DEresvecmismatch[i] <- deltaMethod(model4,paste("x1+x2*",i,"+",CC[1,1],sep=""), parameterNames= paste("x", 1:length(fixef(model4)), sep=""))[[1]]	
+								DEresvecmismatchlb[i] <- deltaMethod(model4,paste("x1+x2*",i,"+",CC[1,1],sep=""), parameterNames= paste("x", 1:length(fixef(model4)), sep=""))[[3]]
+								DEresvecmismatchub[i] <- deltaMethod(model4,paste("x1+x2*",i,"+",CC[1,1],sep=""), parameterNames= paste("x", 1:length(fixef(model4)), sep=""))[[4]]
 							}
 							
-
+						# Mismatch in Switserland
 							CHresvecmismatch <- vector()
 							CHresvecmismatchlb <- vector()
 							CHresvecmismatchub <- vector()
 							for(i in 1:10)
 							{
-								CHresvecmismatch[i] <- deltaMethod(model5,paste("x1+x2*",i,"+",CC[2,1],sep=""), parameterNames= paste("x", 1:length(fixef(model5)), sep=""))[[1]]	
-								CHresvecmismatchlb[i] <- deltaMethod(model5,paste("x1+x2*",i,"+",CC[2,1],sep=""), parameterNames= paste("x", 1:length(fixef(model5)), sep=""))[[3]]	
-								CHresvecmismatchub[i] <- deltaMethod(model5,paste("x1+x2*",i,"+",CC[2,1],sep=""), parameterNames= paste("x", 1:length(fixef(model5)), sep=""))[[4]]
+								CHresvecmismatch[i] <- deltaMethod(model4,paste("x1+x2*",i,"+",CC[2,1],sep=""), parameterNames= paste("x", 1:length(fixef(model4)), sep=""))[[1]]	
+								CHresvecmismatchlb[i] <- deltaMethod(model4,paste("x1+x2*",i,"+",CC[2,1],sep=""), parameterNames= paste("x", 1:length(fixef(model4)), sep=""))[[3]]	
+								CHresvecmismatchub[i] <- deltaMethod(model4,paste("x1+x2*",i,"+",CC[2,1],sep=""), parameterNames= paste("x", 1:length(fixef(model4)), sep=""))[[4]]
 							}
 							
 	# make dataframe with these results
@@ -1360,57 +1377,57 @@ PREDAT$countrytimespartymismatch <-	factor(PREDAT$countrytimespartymismatch,leve
 table(B$countrytimespartymismatch)
 
 ggplot() +
-	geom_jitter(data = PREDAT,aes(x=treatment_merged_num, y=polscale,color=countrytimespartymismatch),size=1.25,width = 0.15) +
+#	geom_jitter(data = PREDAT,aes(x=treatment_merged_num, y=polscale,color=countrytimespartymismatch),size=1.25,width = 0.15) +
 	geom_line(data = B,aes(x=treatment_merged_num, y=est,color=countrytimespartymismatch),size=2.0) +
 	geom_line(data = B,aes(x=treatment_merged_num, y=estlb,color=countrytimespartymismatch),size=1.0,linetype="dashed") +
 	geom_line(data = B,aes(x=treatment_merged_num, y=estub,color=countrytimespartymismatch),size=1.0,linetype="dashed") +
-	geom_ribbon(data = B, aes(x=treatment_merged_num,ymin=estlb,ymax=estub,fill=countrytimespartymismatch,alpha="0.9")) +
+	geom_ribbon(data = B, aes(x=treatment_merged_num,ymin=estlb,ymax=estub,fill=countrytimespartymismatch),alpha="0.1") +
 	scale_x_discrete(name ="Treatment: private to policy", 
                     limits=seq(from=-4,to=5,by=1),
 					labels=c(111,211,311,122,123,133,222,322,233,333)
 					) +
 	scale_y_discrete(name="Self-reported likelihood to vote for candidate",
-					limits=seq(from=0, to=100, by=10),
-					labels=seq(from=0, to=100, by=10)
-					) +
-	scale_color_manual(name = "Estimated likelihood scores", 
+					limits=seq(from=20, to=80, by=10),
+					labels=seq(from=20, to=80, by=10)
+					) +			
+	coord_cartesian(ylim=c(20, 80)) +
+	scale_color_manual(name = "Party mismatch condition", 
 						 labels = c("no party mismatch","CH party mismatch", "DE party mismatch"),
 						 values=c("darkgrey", "darkblue", "darkgreen")) + #values=c("deeppink4", "grey7", "grey60")) +
-	scale_fill_manual(name = "Estimated likelihood scores", 
+	scale_fill_manual(name = "Party mismatch condition", 
 						 labels = c("no party mismatch","CH party mismatch", "DE party mismatch"),
 						 values=c("darkgrey", "darkblue", "darkgreen")) + #values=c("deeppink4", "grey7", "grey60")) +
 	scale_shape_manual(name="Observed likelihood scores", 
 					   labels = c("no party mismatch","CH party mismatch", "DE party mismatch"),
 					   values = c(0, 1, 2)) +
-	
 	my_theme 
 	
-	table(PREDAT$treatment_merged_num)
+		
 	
-	+ 
-PREDAT, aes(x=treatment_merged_num, y=est,color=countrytimespartymismatch)) +
-					geom_jitter(size=0.75) + 
-					geom_line(aes())				
-	
-
-# getting the random part of the model setup and in
+##### working towards a nice regression output
 	
 	m1 <- model1
 	m2 <- model2
-	m3 <- model3
-	#m4 <- model4
-	m5 <- model6
-	m6 <- model6
+	m3 <- model3b
+	m4 <- model4
 
 # name replacements
 
 	specificnamecleaning <- function(dirtynamesloc)	
 			{
 				cleanernames <- gsub("treatment_merged_num","Private (low end) or Policy (high end)",dirtynamesloc,fixed=TRUE)
+				cleanernames <- gsub("Treatment_simpleleft_treatment","Left leaning tweet (ref: neutral) ",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("Treatment_simpleright_treatment","Right leaning tweet (ref: neutral)",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("toomuchall same","All tweets of series same style",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("prefinconditionno pref in selected condition","No party preference",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("nopartytreatmentnone shown","Shown politician without party label",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("Gender_politicianMale","Gender of politician (Male)",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("GenderMatchmismatch","Gender mismatch",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("noleftrightmismatchmismatch","Content left-right mismatch",cleanernames,fixed=TRUE)
 				cleanernames <- gsub("Age","Age",cleanernames,fixed=TRUE)
 				cleanernames <- gsub("GenderWeiblich","Gender (Female)",cleanernames,fixed=TRUE)
-				cleanernames <- gsub("Educ_LevelLow","Education Level (Low)",cleanernames,fixed=TRUE)
-				cleanernames <- gsub("Educ_LevelHigh","Education Level (High)",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("Educ_LevelLow","Education Low)",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("Educ_LevelHigh","Education (High)",cleanernames,fixed=TRUE)
 				cleanernames <- gsub("I(left_right_scale_1 - 50)","Respondent left-right score",cleanernames,fixed=TRUE)
 				cleanernames <- gsub("Extremism","Extremism",cleanernames,fixed=TRUE)
 				cleanernames <- gsub("political_contentJa","Seen political content (Yes)",cleanernames,fixed=TRUE)
@@ -1418,15 +1435,14 @@ PREDAT, aes(x=treatment_merged_num, y=est,color=countrytimespartymismatch)) +
 				cleanernames <- gsub("Follow_PoliticianJa","Following a politician (Yes)",cleanernames,fixed=TRUE)
 				cleanernames <- gsub("Follow_Politicianweiss nicht","Following a politician (Don't know)",cleanernames,fixed=TRUE)
 				cleanernames <- gsub("socialmedia_competenceintermediate","Social Media Competence (interm.)",cleanernames,fixed=TRUE)
-				cleanernames <- gsub("Gender_politicianMale","Gender of politician (Male)",cleanernames,fixed=TRUE)
-				cleanernames <- gsub("GenderMatchmismatch","Gender mismatch",cleanernames,fixed=TRUE)
-				cleanernames <- gsub("noleftrightmismatchmismatch","Content left-right mismatch",cleanernames,fixed=TRUE)
-				cleanernames <- gsub("toomuchall same","All tweets of series same style",cleanernames,fixed=TRUE)
-				cleanernames <- gsub("prefinconditionno pref in selected condition","No party preference",cleanernames,fixed=TRUE)
-				cleanernames <- gsub("nopartytreatmentnone shown","Shown politician without party label",cleanernames,fixed=TRUE)
-
+				cleanernames <- gsub("languageCH-FR","Survey language: French (ref: German))",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("languageCH-DE","Survey language: Swiss German (ref: German)",cleanernames,fixed=TRUE)
+				
 				return(cleanernames)
 			}
+			
+			dirtynames <- names(fixef(m4))
+			
 			specificnamecleaning(dirtynames)
 
 
@@ -1437,7 +1453,7 @@ PREDAT, aes(x=treatment_merged_num, y=est,color=countrytimespartymismatch)) +
 							as.data.frame(VarCorr(m1))$vcov[2],
 							as.data.frame(VarCorr(m2))$vcov[2],
 							as.data.frame(VarCorr(m3))$vcov[2],
-							as.data.frame(VarCorr(m5))$vcov[4]
+							as.data.frame(VarCorr(m4))$vcov[4]
 											),digits=3),nsmall=3)
 		
 		if (runconfints)
@@ -1449,7 +1465,7 @@ PREDAT, aes(x=treatment_merged_num, y=est,color=countrytimespartymismatch)) +
 				
 				am3 <- confint(m3,method="boot",nsim=simulations)
 				am5 <- am3 # temp! take the confidence intervals from the previous run by default so that the script does not crash of no ci can be calculated
-				am5 <- confint(m5,method="boot",nsim=simulations)
+				am5 <- confint(m4,method="boot",nsim=simulations)
 
 				indivlvarse <- format(round(c(
 					((am1[2,2] - am1[2,1]) / 1.98),
@@ -1464,7 +1480,7 @@ PREDAT, aes(x=treatment_merged_num, y=est,color=countrytimespartymismatch)) +
 							as.data.frame(VarCorr(m1))$vcov[1],
 							as.data.frame(VarCorr(m2))$vcov[1],
 							as.data.frame(VarCorr(m3))$vcov[1],
-							as.data.frame(VarCorr(m5))$vcov[1]
+							as.data.frame(VarCorr(m4))$vcov[1]
 											),digits=3),nsmall=3)
 		if (runconfints)
 		{					
@@ -1481,13 +1497,12 @@ PREDAT, aes(x=treatment_merged_num, y=est,color=countrytimespartymismatch)) +
 	nobsc <-  c(nobs(m1),
 				nobs(m2),
 				nobs(m3),
-				nobs(m5),
-				nobs(m6))
+				nobs(m4))
 						
 	nrofcountries <- c(sapply(ranef(m1),nrow)[1],
 							sapply(ranef(m2),nrow)[1],
 							sapply(ranef(m3),nrow)[1],
-							sapply(ranef(m5),nrow)[1])
+							sapply(ranef(m4),nrow)[1])
 
 			GiveBrackets <- function(vector1)
 				{
@@ -1500,17 +1515,17 @@ PREDAT, aes(x=treatment_merged_num, y=est,color=countrytimespartymismatch)) +
 				}
 
 
-	varlabels <- specificnamecleaning(names(fixef(m5)))
+	varlabels <- specificnamecleaning(names(fixef(m4)))
 
 	stargazer(
 		m1,
 		m2,
 		m3,
-		m5,
+		m4,
 		type="text",
 		intercept.bottom=FALSE,
 		no.space=TRUE,
-		column.labels=(c("Treatment","Demographics etc","Oth. Respon.","Tweet.Char.")),
+		column.labels=(c("Treatment","Tweet char.  ","Match char.","Person char.")),
 		star.char = c(".", "*", "**", "***"),
 		star.cutoffs = c(0.1, 0.05, 0.01, 0.001),
 		keep.stat=c("ll"),
