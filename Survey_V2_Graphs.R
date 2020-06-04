@@ -180,6 +180,7 @@
 				summary(AnalysisDF$left_right_scale_1)
 				hist(AnalysisDF$left_right_scale_1,breaks=20)
 				hist(AnalysisDF$avg_perc_lmer,breaks=20)
+				table(is.na(AnalysisDF$left_right_scale_1)) # who are these 100 people for which this is not available?
 			
 			# lets transform our one to a scale 0 to 10
 				AnalysisDF$left_right_scale_010 <- AnalysisDF$left_right_scale_1/10
@@ -668,6 +669,8 @@ table(AnalysisDF$contact_politician)
 #adding Dummy for Education Level of Participants
 
 table(AnalysisDF$Education)
+table(is.na(AnalysisDF$Education))
+
 AnalysisDF$Educ_Level <- as.character(AnalysisDF$Education)
 AnalysisDF$Educ_Level[which(AnalysisDF$Educ_Level == "Universitaet und ETH (Bachelor)")] <- "High"
 AnalysisDF$Educ_Level[which(AnalysisDF$Educ_Level == "Universitaet und ETH (Master)")] <- "High"
@@ -682,7 +685,8 @@ AnalysisDF$Educ_Level[which(AnalysisDF$Educ_Level == "Berufslehre (mit Berufsmat
 AnalysisDF$Educ_Level[which(AnalysisDF$Educ_Level == "Fachhochschule (Master)")] <- "High"
 AnalysisDF$Educ_Level[which(AnalysisDF$Educ_Level == "Eidgenoessisches Berufsattest EBA")] <- "Low"
 AnalysisDF$Educ_Level[which(AnalysisDF$Educ_Level == "Primarschule")] <- "Low"
-AnalysisDF$Educ_Level[which(AnalysisDF$Educ_Level == "keine der genannten Optionen")] <- NA
+# AnalysisDF$Educ_Level[which(AnalysisDF$Educ_Level == "keine der genannten Optionen")] <- NA
+AnalysisDF$Educ_Level[which(AnalysisDF$Educ_Level == "keine der genannten Optionen")] <- "Low" # when people pick this 'none of the options' category, we are going to assume they where lower educated so that we do not need to drop the cases.
 
 #DE
 AnalysisDF$Educ_Level[which(AnalysisDF$Educ_Level == "Gymnasium")] <- "Middle"
@@ -701,6 +705,7 @@ AnalysisDF$Educ_Level[which(AnalysisDF$Educ_Level == "Grundschule")] <- "Low"
 
 educ_level <- table(AnalysisDF$Educ_Level)
 educ_level
+table(is.na(AnalysisDF$Educ_Level))
 
 
 ####################################################################################
@@ -1104,13 +1109,13 @@ if(FALSE)
 						toomuch +
 						nopartytreatment +
 						offset(I(betaimage*image_check_num)) + # don't forget the manually include this in the final model output!
-						# nopartymismatch +
+						# nopartymismatch + # is include as a country specific effect!
 						noleftrightmismatch +
 					    (nopartymismatch|country) + # don't forget the manually include this in the final model output!
 						GenderMatch +
 					#   Age +
-						Gender + # no cases dropped here
-						Educ_Level + # 20 cases lost here
+						Gender + 
+						Educ_Level + 
 						I(left_right_scale_1-50) + # 32 additional cases lost here
 					#	Extremism +
 					#   political_content +
@@ -1126,141 +1131,6 @@ if(FALSE)
 
 		stargazer(model0, model1, model2, model3b, model4, type="text")
 	
-	
-	
-
-	model5 <- lmer(polscale~treatment_merged_num +
-				   treatment_merged_num*Educ_Level +
-				   Age +
-				   Gender +
-				   Educ_Level +
-				   I(left_right_scale_1-50) +
-				   Extremism +
-			#	   political_content +
-			#	   Follow_Politician +
-			#	   socialmedia_competence +
-			#	   Gender_politician +
-			#	   GenderMatch +
-				   noleftrightmismatch +
-			#	   nopartymismatch +
-				   toomuch +
-				   offset(I(betaimage*image_check_num)) +
-				   prefincondition +
-				   nopartytreatment +
-			#	   language +
-			#	   obscurepartydummy +
-			#	   (1|country) +
-				   (nopartymismatch|country)
-				   #(nopartymismatch|country)
-				 ,data=DRED)
-
-	summary(model5)
-	coef(model5)
-	anova(model5)
-	ranef(model5)
-	attr(ranef(model5, postVar = TRUE)[[1]], "postVar")
-	attr(ranef(model5, condVar = TRUE)[[1]], "postVar")
-
-	stargazer(model1,model2,model3,model5,type="text",intercept.bottom=FALSE)
-
-
-
-model4 <- lmer(polscale~treatment_merged_num +
-               Age +
-               Gender +
-               Educ_Level +
-               I(left_right_scale_1-50) +
-               Extremism +
-               political_content +
-               Follow_Politician +
-               socialmedia_competence +
-               Gender_politician +
-               GenderMatch +
-               noleftrightmismatch +
-               nopartymismatch +
-			   (1|country)
-             ,data=AnalysisDF)
-
-summary(model4)
-library(stargazer)
-stargazer(model1,model2,model3,model4,type="text")
-
-
-
-
-
-
-#demographics
-model2 <- lmer(polscale~treatment_merged_num +
-               Age +
-               Gender +
-               Educ_Level +
-			   (1|country)
-             ,data=AnalysisDF)
-
-summary(model2)
-library(stargazer)
-stargazer(model1,model2,type="text")
-#anova(model1,model2)
-
-
-
-#demographics + other participant characteristics
-model3 <- lmer(polscale~treatment_merged_num +
-               Age +
-               Gender +
-               Educ_Level +
-               I(left_right_scale_1-50) +
-               Extremism +
-               political_content +
-               Follow_Politician +
-               socialmedia_competence +
-			   (1|country)
-             ,data=AnalysisDF)
-
-summary(model3)
-library(stargazer)
-stargazer(model1,model2,model3,type="text")
-#anova(model1,model2)
-
-   
-#model with matches/mismatches
-
-
-
-
-#model 4b
-
-#model with matches/mismatches
-
-model4b <- lmer(polscale~treatment_merged_num +
-               Age +
-               Gender +
-               Educ_Level +
-               I(left_right_scale_1-50) +
-               Extremism +
-               political_content +
-               Follow_Politician +
-               socialmedia_competence +
-               Gender_politician +
-               GenderMatch +
-               noleftrightmismatch *nopartymismatch +
-			   (1|country)
-             ,data=AnalysisDF)
-
-summary(model4b)
-library(stargazer)
-stargazer(model1,model2,model3,model4,model4b,type="text")
-#anova(model1,model3)
-
-
-
-
-# model with additional tweet characteristics
-
-
-
-
 # model with left-right distance on basis of positions
 	
 				# list of variables to take towards the model
