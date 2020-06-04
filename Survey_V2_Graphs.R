@@ -180,7 +180,31 @@
 				summary(AnalysisDF$left_right_scale_1)
 				hist(AnalysisDF$left_right_scale_1,breaks=20)
 				hist(AnalysisDF$avg_perc_lmer,breaks=20)
-				table(is.na(AnalysisDF$left_right_scale_1)) # who are these 100 people for which this is not available?
+				table(is.na(AnalysisDF$left_right_scale_1)) 
+				# who are these 100 people for which this is not available? - the suggestion is that these are simply people that did not move the slider.. so let's do a little bit of missing data treatment (single imputation)/
+				
+					# what is the mean?
+						lrmean <- mean(AnalysisDF$left_right_scale_1,na.rm=TRUE)
+					
+					# what is the sd
+						lrsd <- sd(AnalysisDF$left_right_scale_1,na.rm=TRUE)
+					
+					# replacment vector (only used when value is NA)
+						lrreplacementvec <- rnorm(n=nrow(AnalysisDF), mean=lrmean, sd=lrsd)
+				
+				# do the imputation
+						tempres <- ifelse(is.na(AnalysisDF$left_right_scale_1),lrreplacementvec,AnalysisDF$left_right_scale_1)
+						
+					# comparing these three 
+						par(mfrow=c(1,3))
+							hist(AnalysisDF$left_right_scale_1,breaks=20)
+							hist(lrreplacementvec,breaks=20)
+							hist(tempres,breaks=20)
+						dev.off()
+				
+				table(is.na(AnalysisDF$left_right_scale_1))
+				AnalysisDF$left_right_scale_1 <- tempres
+				table(is.na(AnalysisDF$left_right_scale_1))
 			
 			# lets transform our one to a scale 0 to 10
 				AnalysisDF$left_right_scale_010 <- AnalysisDF$left_right_scale_1/10
@@ -1130,6 +1154,10 @@ if(FALSE)
 		attr(ranef(model4, condVar = TRUE)[[1]], "postVar") # estimated standard errors are the values on the bottom right
 
 		stargazer(model0, model1, model2, model3b, model4, type="text")
+	
+	
+	
+	
 	
 # model with left-right distance on basis of positions
 	
