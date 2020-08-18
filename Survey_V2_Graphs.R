@@ -108,10 +108,7 @@
 			table(AnalysisDF$presented_party,AnalysisDF$language)
 		
 	# get the perceived left/right party positions in that Natalie provided
-
-
-		
-
+	
 		# 'party_treatment' contains the parties that respondents saw <- I think with the fixes I implemented this is now indeed true
 		table(AnalysisDF$party_treatment) 
 		table(AnalysisDF$party_treatment,AnalysisDF$country)
@@ -730,14 +727,32 @@ AnalysisDF$Educ_Level[which(AnalysisDF$Educ_Level == "Hauptschule")] <- "Low"
 AnalysisDF$Educ_Level[which(AnalysisDF$Educ_Level == "Abendgymnasium")] <- "Middle"
 AnalysisDF$Educ_Level[which(AnalysisDF$Educ_Level == "Grundschule")] <- "Low"
 
+
+AnalysisDF$CountryAndEducation <- paste(AnalysisDF$country,AnalysisDF$Education,sep=" - ")
+
+table(AnalysisDF$CountryAndEducation)
+
+educdetailstab <- table(AnalysisDF$CountryAndEducation,AnalysisDF$Educ_Level)
+educdetailstab
+
+table(is.na(AnalysisDF$Education))
+table(is.na(AnalysisDF$Educ_Level))
+
 educ_level <- table(AnalysisDF$Educ_Level)
 educ_level
+prop.table(educ_level)
+
+
 table(is.na(AnalysisDF$Educ_Level))
 
 
 ####################################################################################
 
-# "Extremism" Dummy: measuring how far away a participant is from the middle category (50) on the left-right slider
+# "Extremism" Dummy: measuring how far away a participant is from the middle category (50) on the left-right slide
+
+
+
+
 
 hist(AnalysisDF$left_right_scale_1)
 #dev.copy(png,'histogramm_left-right.png')
@@ -926,6 +941,43 @@ lines(1:10, means9$polscale, col = "red", lwd = 2.5)
 #dev.off()
 
 
+# couple of basic descripitves for the paper
+
+nrow(AnalysisDF)
+names(AnalysisDF)
+
+# age
+	hist(AnalysisDF$Age,breaks=30)
+	  
+	ggplot(data=AnalysisDF, aes(Age, fill=country)) +
+	  geom_histogram(aes(y=c(..count..[..group..==1]/sum(..count..[..group..==1]),
+							 ..count..[..group..==2]/sum(..count..[..group..==2]))*100),
+					 position='dodge', binwidth=5) +
+	  ylab("Percentage") + xlab("Age") +
+	  theme_pubr(base_size = 18) +
+	  scale_fill_grey()
+	 
+	range(AnalysisDF$Age)
+	mean(AnalysisDF$Age)
+	sd(AnalysisDF$Age)
+	
+# gender
+	
+	table(AnalysisDF$Gender)
+	prop.table(table(AnalysisDF$Gender))
+
+	table(AnalysisDF$Gender,AnalysisDF$country)
+	prop.table(table(AnalysisDF$Gender,AnalysisDF$country),2)
+
+# education
+
+	# see above!
+	
+# left-right position of respondent
+	
+	mean(AnalysisDF$left_right_scale_010)
+	sd(AnalysisDF$left_right_scale_010)
+
 #######################################################################################################################################
 ################################################# !! LINEAR REGRESSION MODELS !! #####################################################
 #######################################################################################################################################
@@ -970,6 +1022,9 @@ par(mfrow=c(1,1))
 	  AnalysisDF$polscale <- AnalysisDF$L2V # be aware! we are doing likilhood to vote!
 	#  AnalysisDF$polscale <- AnalysisDF$Warmth
 	#  AnalysisDF$polscale <- AnalysisDF$Credibility
+	
+	mean(AnalysisDF$polscale)
+	sd(AnalysisDF$polscale)
 
 #######################################################################################################################################
 
@@ -1070,7 +1125,7 @@ if(FALSE)
 	
 	# and continuing with the actual core model!
 	model2 <- lmer(polscale~treatment_merged_num +
-				#	Gender_politician + # drop in main
+					Gender_politician + 
 					Treatment_simple +
 					toomuch +
 					nopartytreatment +
@@ -1087,7 +1142,7 @@ if(FALSE)
 
 	## in general
 		model3a <- lmer(polscale~treatment_merged_num +
-					#	Gender_politician + # drop in main
+						Gender_politician + 
 						Treatment_simple +
 						toomuch +
 						nopartytreatment +
@@ -1106,7 +1161,7 @@ if(FALSE)
 	## and country specific
 	
 		model3b <- lmer(polscale~treatment_merged_num +
-					#	Gender_politician + # drop in main
+						Gender_politician + 
 						Treatment_simple +
 						toomuch +
 						nopartytreatment +
@@ -1131,8 +1186,10 @@ if(FALSE)
 		AnalysisDF$political_content <- factor(AnalysisDF$political_content,levels = c("Nein", "Ja", "weiss nicht"))
 		AnalysisDF$language <- factor(AnalysisDF$language,levels = c("DE-DE", "CH-DE", "CH-FR"))
 
-	model4 <- lmer(polscale~treatment_merged_num +
-					#	Gender_politician + # drop in main
+	model4 <- lmer(polscale~
+						treatment_merged_num +
+					#	treatment_merged_num * Educ_Level +
+						Gender_politician + 
 						Treatment_simple +
 						toomuch +
 						nopartytreatment +
@@ -1559,6 +1616,33 @@ stdCoef.merMod <- function(object) {
 }
 stdCoef.merMod(m5)
 
+############# 
+### get a dotwhisker plot for the presentation
+#############
+
+relabelvec <- varlabels
+names(relabelvec) <- names(fixef(m4))
+relabelvec
+
+# library(dotwhisker)
+dwplot(m4,
+		dot_args = list(size = 4,color="black"),
+		whisker_args = list(size = 1.5,color="black")
+		) %>%
+		relabel_predictors(relabelvec) +
+		theme_pubclean(base_size = 20) +
+		geom_vline(xintercept = 0)
+		
+	sd(AnalysisDF$treatment_merged_num)
+
+
+	sd(AnalysisDF$nopartymismatch)
+	sd(AnalysisDF[which(AnalysisDF$country == "DE"),]$nopartymismatch)
+	sd(AnalysisDF[which(AnalysisDF$country == "CH"),]$nopartymismatch)
+	
+	(sd(AnalysisDF$nopartymismatch)*2)
+	−21.909 / (sd(AnalysisDF$nopartymismatch)*2)
+	−11.015 / (sd(AnalysisDF$nopartymismatch)*2)
 
 #######################################################################################################################################
 #building a Table with descriptives of variables used in the regression models above
