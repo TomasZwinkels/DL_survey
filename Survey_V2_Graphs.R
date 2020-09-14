@@ -46,10 +46,16 @@
 	summary(DF)
 	colnames(DF)
 
+	names(DF)[which(names(DF) == "manipul_checks1_1")] <- "mc_concrete_policy"
+	names(DF)[which(names(DF) == "manipul_checks1_2")] <- "mc_citizen_care"
+	names(DF)[which(names(DF) == "manipul_checks1_3")] <- "mc_personal_life"
+	names(DF)[which(names(DF) == "manipul_checks1_4")] <- "mc_engaged"
+	names(DF)[which(names(DF) == "manipul_checks1_5")] <- "mc_topic_care"
+
 	# select key variables of interest
 		varstotake <- c("Age","Gender","Gender_politician","voting_kanton","Education","SocialMediaUse","political_content","Follow_Politician", 
 					"SocialMediaPosting","party_treatment","left_right_scale_1","presented_party","suitability","L2V","Warmth"
-					,"Credibility","Thermometer","NameTreatment", "country","Party","Party2ndChoice","language")
+					,"Credibility","Thermometer","NameTreatment", "country","Party","Party2ndChoice","language","mc_concrete_policy","mc_personal_life")
 
 		AnalysisDF <- DF[varstotake]
 		head(AnalysisDF)
@@ -291,62 +297,64 @@
 #write.csv(AnalysisDF, file = "AnalysisDF.csv",row.names=FALSE)
 
 # lookup: doing descripiv tables in stargazer
-stargazer(AnalysisDF,type="text")
+	stargazer(AnalysisDF,type="text")
 
 # set NA values
-AnalysisDF[AnalysisDF=="NA"] <- NA
-AnalysisDF[AnalysisDF=="#VALUE!"] <- NA
+	AnalysisDF[AnalysisDF=="NA"] <- NA
+	AnalysisDF[AnalysisDF=="#VALUE!"] <- NA
 
 
 #Some quick checks how the measurement-values of the treatments are distributed in the data, checking the measurement scale
 
 # inspect the distribution of treatments 
-AnalysisDF$NameTreatment <- as.factor(AnalysisDF$NameTreatment)
-table(AnalysisDF$NameTreatment)
+	AnalysisDF$NameTreatment <- as.factor(AnalysisDF$NameTreatment)
+	table(AnalysisDF$NameTreatment)
 
-# set and inspect for the different measurements of measurement-scale
-table(AnalysisDF$suitability)
-AnalysisDF$suitability <- as.numeric(as.character(AnalysisDF$suitability))
-table(AnalysisDF$suitability)
-hist(AnalysisDF$suitability)
+	# set and inspect for the different measurements of measurement-scale
+	table(AnalysisDF$suitability)
+	AnalysisDF$suitability <- as.numeric(as.character(AnalysisDF$suitability))
+	table(AnalysisDF$suitability)
+	hist(AnalysisDF$suitability)
 
-table(AnalysisDF$L2V)
-AnalysisDF$L2V <- as.numeric(as.character(AnalysisDF$L2V))
-table(AnalysisDF$L2V)
-hist(AnalysisDF$L2V)
+	table(AnalysisDF$L2V)
+	AnalysisDF$L2V <- as.numeric(as.character(AnalysisDF$L2V))
+	table(AnalysisDF$L2V)
+	hist(AnalysisDF$L2V)
 
-table(AnalysisDF$Warmth)
-AnalysisDF$Warmth <- as.numeric(as.character(AnalysisDF$Warmth))
-table(AnalysisDF$Warmth)
-hist(AnalysisDF$Warmth)
+	table(AnalysisDF$Warmth)
+	AnalysisDF$Warmth <- as.numeric(as.character(AnalysisDF$Warmth))
+	table(AnalysisDF$Warmth)
+	hist(AnalysisDF$Warmth)
 
-table(AnalysisDF$Credibility)
-AnalysisDF$Credibility <- as.numeric(as.character(AnalysisDF$Credibility))
-table(AnalysisDF$Credibility)
-hist(AnalysisDF$Credibility)
+	table(AnalysisDF$Credibility)
+	AnalysisDF$Credibility <- as.numeric(as.character(AnalysisDF$Credibility))
+	table(AnalysisDF$Credibility)
+	hist(AnalysisDF$Credibility)
 
 # make a scale out of the 4 main measurement items --> polscale = the mean of the 4 measurements, this will be used as dependent variable
 
-AnalysisDF$polscale <- (AnalysisDF$suitability + AnalysisDF$L2V + AnalysisDF$Warmth + AnalysisDF$Credibility) / 4
-hist(AnalysisDF$polscale)
-summary(AnalysisDF$polscale)
+	AnalysisDF$polscale <- (AnalysisDF$suitability + AnalysisDF$L2V + AnalysisDF$Warmth + AnalysisDF$Credibility) / 4
+	hist(AnalysisDF$polscale)
+	summary(AnalysisDF$polscale)
 
 
 # some additional descriptives
 
-data.matrix(AnalysisDF, rownames.force = NA)
-aggTest <- aggregate(AnalysisDF, by = list(AnalysisDF$NameTreatment), FUN = mean, simplify = T, drop = T)
-aggTest
+	data.matrix(AnalysisDF, rownames.force = NA)
+	aggTest <- aggregate(AnalysisDF, by = list(AnalysisDF$NameTreatment), FUN = mean, simplify = T, drop = T)
+	aggTest
 
 
-head(AnalysisDF)
+	head(AnalysisDF)
 
-data.frame(DF$Age, DF$Gender, DF$voting_kanton, DF$Education, DF$SocialMediaUse,
-           DF$NameTreatment, DF$suitability, DF$L2V, DF$Warmth, DF$Credibility, DF$Thermometer)
+	data.frame(DF$Age, DF$Gender, DF$voting_kanton, DF$Education, DF$SocialMediaUse,
+			   DF$NameTreatment, DF$suitability, DF$L2V, DF$Warmth, DF$Credibility, DF$Thermometer)
 
-head(AnalysisDF)
+	head(AnalysisDF)
 
-summary(AnalysisDF)
+	summary(AnalysisDF)
+
+
 
 
 
@@ -911,12 +919,90 @@ lines(1:10, means4$polscale, col = "red", lwd = 2.5)
 #dev.off()
 
 #######################################################################################################################################
+############################ several descriptives that require more processed data ###############################
 #######################################################################################################################################
+
+
+## selecting 'successfull treatments' for the main survey
+	
+	# get the scale in order
+	
+	CleanMc <- function(localvec)
+	{
+		localvec[which(localvec == "Ich bin gar nicht einverstanden")] <- 1
+		localvec[which(localvec == "Je ne suis pas du tout d’accord")] <- 1
+		localvec[which(localvec == "Ich bin vollkommen einverstanden")] <- 5
+		localvec[which(localvec == "Je suis entièrement d’accord")] <- 5
+	return(localvec)
+	}
+		
+	AnalysisDF$mc_concrete_policy <- CleanMc(AnalysisDF$mc_concrete_policy)
+	table(AnalysisDF$mc_concrete_policy)
+	AnalysisDF$mc_concrete_policy <- as.numeric(AnalysisDF$mc_concrete_policy)
+	table(AnalysisDF$mc_concrete_policy)
+	
+	AnalysisDF$mc_personal_life <- CleanMc(AnalysisDF$mc_personal_life)
+	table(AnalysisDF$mc_personal_life)
+	AnalysisDF$mc_personal_life <- as.numeric(AnalysisDF$mc_personal_life)
+	table(AnalysisDF$mc_personal_life)
+	
+
+	# indeed a nice inverse relation? --- nope, the suggestion is a positive relation? -- might be due to other design issues ofcourse - with all the different treatments
+	ggplot(AnalysisDF, aes(mc_concrete_policy, mc_personal_life)) +
+	geom_point() +
+	geom_jitter() + 
+	geom_smooth(method = "loess")
+	
+	
+	# how does it look over the treatments?
+	DA <- aggregate(mc_concrete_policy~treatment_merged, mean,data=AnalysisDF) # small but consistent effect
+	DB <- aggregate(mc_personal_life~treatment_merged, mean,data=AnalysisDF) # same in opposite direction
+	DA$type <- "Policy"
+	DB$type <- "Personal"
+
+	D <- as.data.frame(rbind(as.matrix(DA),as.matrix(DB)))
+	names(D) <- c("treatment_merged","meanvalue","type")
+	D$meanvalue <- as.numeric(as.character(D$meanvalue))
+	D$treatment_merged <- factor(D$treatment_merged,levels = c("111","211","311","122","123","133","222","322","233","333"))
+	
+	
+	ggplot(D,aes(x=treatment_merged,y=meanvalue)) +
+	geom_line()
+	
+	
+	
+	
+	mean(AnalysisDF$mc_concrete_policy,na.rm=T) # the means are rather close together..
+	mean(AnalysisDF$mc_personal_life,na.rm=T)
+	
+	# which conditions have the biggest difference between them?
+	
+	DIFM <- matrix(ncol=10,nrow=10)
+	rownames(DIFM) <- c("111","211","311","122","123","133","222","322","233","333")
+	colnames(DIFM) <- c("111","211","311","122","123","133","222","322","233","333")
+	
+		for(i in 1:10)
+		{
+			group_for_policy = rownames(DIFM)[i]
+			for(j in 1:10)
+			{
+			group_for_personal = rownames(DIFM)[j]
+			
+			DIFM[i,j] <- mean(AnalysisDF$mc_personal_life[which(AnalysisDF$treatment_merged == group_for_personal)],na.rm=TRUE) -
+						 mean(AnalysisDF$mc_concrete_policy[which(AnalysisDF$treatment_merged == group_for_policy)],na.rm=TRUE)
+			}
+		}
+	rownames(DIFM) <- paste0("po_",c("111","211","311","122","123","133","222","322","233","333"))
+	colnames(DIFM) <- paste0("pe_",c("111","211","311","122","123","133","222","322","233","333"))
+	DIFM # here, we are interested in the largest values on the diagonal!
+		# 233 is the largest value on the high range,
+		# 111 is the higest on the low range but we do not want to use 'all the same values...'
+		# I do feel however, means do need to be taken into account here..  how about we calculcate these values as standard deviations from the mean?!
+	# I say, we contrast 211 VS 233
 
 #Plotting means of merged treatments w/o images
 
-#ordering the treatments according the ranking
-noimages_noideologyDF$treatment_merged <- factor(noimages_noideologyDF$treatment_merged,levels = c("111","211","311","122","123","133","222","322","233","333"))
+
 
 measurements9 <- noimages_noideologyDF$polscale
 treatments9 <- noimages_noideologyDF$treatment_merged
