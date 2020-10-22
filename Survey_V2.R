@@ -966,8 +966,9 @@ lines(1:10, means4$polscale, col = "red", lwd = 2.5)
 	D$treatment_merged <- factor(D$treatment_merged,levels = c("111","211","311","122","123","133","222","322","233","333"))
 	
 	
-	ggplot(D,aes(x=treatment_merged,y=meanvalue)) +
-	geom_line()
+	ggplot(D,aes(x=treatment_merged,y=meanvalue,label=type)) +
+	geom_line() +
+	geom_text(aes(label=type),hjust=0, vjust=0)
 	
 	
 	
