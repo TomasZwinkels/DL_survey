@@ -7,16 +7,16 @@
 	setwd("C:\\Users\\turnerzw\\Basel Powi Dropbox\\Tomas Zwinkels\\DigitalLives\\r-scripts\\r-scripts survey")
 
 
-	#install.packages("dplyr")
-	#install.packages("readxl")
-	#install.packages("ggplot2")
-	#install.packages("sqldf")
-	#install.packages("XLConnect")
-	#install.packages("stargazer")
-	#install.packages("lme4")
-	#install.packages("merTools")
-	#install.packages("afex")
-	#install.packages("fontawesome")
+#	install.packages("dplyr")
+#	install.packages("readxl")
+#	install.packages("ggplot2")
+#	install.packages("sqldf")
+#	install.packages("XLConnect")
+#	install.packages("stargazer")
+#	install.packages("lme4")
+#	install.packages("merTools")
+#	install.packages("afex")
+#	install.packages("fontawesome")
 
 	library(readxl)
 	library(dplyr)
@@ -1154,15 +1154,26 @@ if(FALSE)
 		
 		AnalysisDF$Treatment_simple <- factor(AnalysisDF$Treatment_simple,levels = c("neutral", "left_treatment", "right_treatment"))
 		
+	# test: Germany or Switserland only
+	
+		names(AnalysisDF)
+		table(AnalysisDF$country)
+		
+		# Germany
+			#	AnalysisDF <- AnalysisDF[which(AnalysisDF$country == "DE"),]
+				nrow(AnalysisDF)
+				
+		# Switserland
+			AnalysisDF <- AnalysisDF[which(AnalysisDF$country == "CH"),]
+				nrow(AnalysisDF)
+		
 ### an empty model ~~~~~~
-	model0 <- lmer(polscale~1 +
-				  (1|country)
+	model0 <- lm(polscale~1 
 				 ,data=AnalysisDF)
 	summary(model0)
 
 #### treatment only ~~~~~~
-	model1 <- lmer(polscale~treatment_merged_num +
-				  (1|country)
+	model1 <- lm(polscale~treatment_merged_num 
 				 ,data=AnalysisDF)
 
 	summary(model1)
@@ -1217,13 +1228,12 @@ if(FALSE)
 			table(AnalysisDF$image_check_num,AnalysisDF$image_check)
 	
 	# and continuing with the actual core model!
-	model2 <- lmer(polscale~treatment_merged_num +
+	model2 <- lm(polscale~treatment_merged_num +
 					Gender_politician + 
 					Treatment_simple +
 					toomuch +
 					nopartytreatment +
-					offset(I(betaimage*image_check_num)) + # don't forget the manually include this in the final model!
-				   (1|country)
+					offset(I(betaimage*image_check_num)) 
 				  ,data=AnalysisDF)
 				 
 	summary(model2)
@@ -1234,7 +1244,7 @@ if(FALSE)
 #### adding the match characteristics ~~~
 
 	## in general
-		model3a <- lmer(polscale~treatment_merged_num +
+		model3a <- lm(polscale~treatment_merged_num +
 						Gender_politician + 
 						Treatment_simple +
 						toomuch +
@@ -1242,8 +1252,7 @@ if(FALSE)
 						offset(I(betaimage*image_check_num)) + # don't forget the manually include this in the final model!
 						nopartymismatch +
 						noleftrightmismatch + # we loose cases on the left/right mismatch! <<<<<< investigate this soon and give it its own commit! >>>>>>
-						GenderMatch +
-					   (1|country)
+						GenderMatch 
 					  ,data=AnalysisDF)
 					 
 		summary(model3a)
@@ -1253,7 +1262,7 @@ if(FALSE)
 	
 	## and country specific
 	
-		model3b <- lmer(polscale~treatment_merged_num +
+		model3b <- lm(polscale~treatment_merged_num +
 						Gender_politician + 
 						Treatment_simple +
 						toomuch +
@@ -1261,9 +1270,8 @@ if(FALSE)
 						offset(I(betaimage*image_check_num)) + # don't forget the manually include this in the final model output!
 						# nopartymismatch +
 						noleftrightmismatch +
-					   (nopartymismatch|country) + # don't forget the manually include this in the final model output!
-					    GenderMatch +
-					   (1|country)
+					 #  (nopartymismatch|country) + # don't forget the manually include this in the final model output!
+					    GenderMatch 
 					  ,data=AnalysisDF)
 					 
 		summary(model3b)
@@ -1279,7 +1287,7 @@ if(FALSE)
 		AnalysisDF$political_content <- factor(AnalysisDF$political_content,levels = c("Nein", "Ja", "weiss nicht"))
 		AnalysisDF$language <- factor(AnalysisDF$language,levels = c("DE-DE", "CH-DE", "CH-FR"))
 
-	model4 <- lmer(polscale~
+	model4 <- lm(polscale~
 						treatment_merged_num +
 					#	treatment_merged_num * Educ_Level +
 						Gender_politician + 
@@ -1289,19 +1297,19 @@ if(FALSE)
 						offset(I(betaimage*image_check_num)) + # don't forget the manually include this in the final model output!
 						# nopartymismatch + # is include as a country specific effect!
 						noleftrightmismatch +
-					    (nopartymismatch|country) + # don't forget the manually include this in the final model output!
+					#    (nopartymismatch|country) + # don't forget the manually include this in the final model output!
 						GenderMatch +
 					#   Age + # drop in main
 						Gender + 
 						Educ_Level + 
-						I(left_right_scale_1-50) + # 32 additional cases where lost here
+						I(left_right_scale_1-50) # 32 additional cases where lost here
 					#	Extremism + # drop in main 
 					#   political_content + # drop in main
 					#	Follow_Politician + # drop in main
 					#	socialmedia_competence + # drop in main
 					#	language + # drop in main
 					#	country + # to check if there are baseline country differences, there are not
-					   (1|country)
+		
 					  ,data=AnalysisDF)
 					 
 		summary(model4) # BE AWARE OF CONVERGENCE OR SINGULARITY WARNINGS
@@ -1347,7 +1355,7 @@ if(FALSE)
 
 		grid.arrange(plot1, plot2, ncol=2)
 		
-	model6 <- lmer(polscale~treatment_merged_num +
+	model6 <- lm(polscale~treatment_merged_num +
 				   Treatment_simple +
 				   toomuch +
 				   nopartytreatment +
@@ -1358,14 +1366,13 @@ if(FALSE)
 				   #   Age +
 						Gender + 
 						Educ_Level + 
-						I(left_right_scale_1-50) + # 32 additional cases lost here
+						I(left_right_scale_1-50) # 32 additional cases lost here
 					#	Extremism +
 					#   political_content +
 					#	Follow_Politician +
 					#	socialmedia_competence +
 					#	language +
 				#   (nopartymismatch|country) + # should not be included, because we are now doing a much more gradual party mismatch
-				   (abslmerdifformodel|country)
 				#	   (1|country)  
 				 ,data=AnalysisDF)
 
