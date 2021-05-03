@@ -16,6 +16,7 @@
 	#install.packages("lme4")
 	#install.packages("merTools")
 	#install.packages("afex")
+	#install.packages("fontawesome")
 
 	library(readxl)
 	library(dplyr)
@@ -26,6 +27,7 @@
 	library(car)
 	library(viridis)
 	library(stargazer)
+	library(fontawesome)
 #	library(merTools)
 #	library(lmerTest)
 #	library(afex)
@@ -782,7 +784,10 @@ noimagesDF
 #Plotting means of merged treatments w/o images
 
 #ordering the treatments according the ranking
-noimagesDF$treatment_merged <- factor(noimages_noideologyDF$treatment_merged,levels = c("111","211","311","122","123","133","222","322","233","333"))
+
+levelsvec <- c("111","211","311","122","123","133","222","322","233","333")
+levelsvec_graphic <- c(".",".",".",".",".",".",".",".",".",".")
+noimagesDF$treatment_merged <- factor(noimages_noideologyDF$treatment_merged,levels = levelsvec)
 
 measurements8 <- noimagesDF$polscale
 treatments8 <- noimagesDF$treatment_merged
@@ -793,11 +798,12 @@ medians8 <- aggregate(polscale~treatment_merged, median,data=noimagesDF)
 boxplot(measurements8~treatments8,
         data = noimagesDF,
         notch = FALSE,
-        main = "Means of Treatments",
+        main = "Means of treatments",
         xlab = "Treatments (w/o images)",
         ylab = "Evaluation Score (0-100)",
         col = "gray",
-        border = "black"
+        border = "black",
+		names = levelsvec_graphic
 )
 points(1:10, means8$polscale, col = "red",lwd = 4)
 text(1:10, medians8$polscale + 3, labels = round(means8$polscale,digits=1))
