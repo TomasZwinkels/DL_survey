@@ -17,6 +17,7 @@
 #	install.packages("merTools")
 #	install.packages("afex")
 #	install.packages("fontawesome")
+#	install.packages("QuantPsyc")
 
 	library(readxl)
 	library(dplyr)
@@ -28,6 +29,7 @@
 	library(viridis)
 	library(stargazer)
 	library(fontawesome)
+	library(QuantPsyc)
 #	library(merTools)
 #	library(lmerTest)
 #	library(afex)
@@ -1164,7 +1166,7 @@ if(FALSE)
 				nrow(AnalysisDF)
 				
 		# Switserland
-			AnalysisDF <- AnalysisDF[which(AnalysisDF$country == "CH"),]
+			#    AnalysisDF <- AnalysisDF[which(AnalysisDF$country == "CH"),]
 				nrow(AnalysisDF)
 		
 ### an empty model ~~~~~~
@@ -1268,8 +1270,8 @@ if(FALSE)
 						toomuch +
 						nopartytreatment +
 						offset(I(betaimage*image_check_num)) + # don't forget the manually include this in the final model output!
-						# nopartymismatch +
 						noleftrightmismatch +
+						nopartymismatch +
 					 #  (nopartymismatch|country) + # don't forget the manually include this in the final model output!
 					    GenderMatch 
 					  ,data=AnalysisDF)
@@ -1295,8 +1297,8 @@ if(FALSE)
 						toomuch +
 						nopartytreatment +
 						offset(I(betaimage*image_check_num)) + # don't forget the manually include this in the final model output!
-						# nopartymismatch + # is include as a country specific effect!
 						noleftrightmismatch +
+						nopartymismatch +
 					#    (nopartymismatch|country) + # don't forget the manually include this in the final model output!
 						GenderMatch +
 					#   Age + # drop in main
@@ -1594,6 +1596,8 @@ ggplot() +
 				cleanernames <- gsub("socialmedia_competenceintermediate","Social Media Competence (interm.)",cleanernames,fixed=TRUE)
 				cleanernames <- gsub("languageCH-FR","Survey language: French (ref: German))",cleanernames,fixed=TRUE)
 				cleanernames <- gsub("languageCH-DE","Survey language: Swiss German (ref: German)",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("nopartymismatchmismatch","Party mismatch",cleanernames,fixed=TRUE)
+				nopartymismatchmismatch
 				
 				return(cleanernames)
 			}
@@ -1605,6 +1609,17 @@ ggplot() +
 
 # use bootstrapping to get a standard error for the variance estimates.
 		runconfints <- TRUE
+		
+				# empty vector for the 'lm' version
+				indivlvar <- c(NA,NA,NA,NA)
+		
+				# variance from normal lm
+				indivlvar <- format(round(c(
+											summary(m1)$r.squared,
+											summary(m2)$r.squared,
+											summary(m3)$r.squared,
+											summary(m4)$r.squared
+											),digits=3),nsmall=3)
 		
 				indivlvar <- format(round(c(
 							as.data.frame(VarCorr(m1))$vcov[2],
@@ -1633,6 +1648,9 @@ ggplot() +
 		} else {
 			indivlvarse <- rep("NE",4)
 		}								
+				# empty vector for the 'lm' version
+				countryvar <- c(NA,NA,NA,NA)
+				
 				countryvar <- format(round(c(
 							as.data.frame(VarCorr(m1))$vcov[1],
 							as.data.frame(VarCorr(m2))$vcov[1],
@@ -1655,7 +1673,10 @@ ggplot() +
 				nobs(m2),
 				nobs(m3),
 				nobs(m4))
-						
+
+	# empty vector for the 'lm' version
+	nrofcountries <- c(NA,NA,NA,NA)
+	
 	nrofcountries <- c(sapply(ranef(m1),nrow)[1],
 							sapply(ranef(m2),nrow)[1],
 							sapply(ranef(m3),nrow)[1],
@@ -1672,6 +1693,7 @@ ggplot() +
 				}
 
 
+	varlabels <- specificnamecleaning(names(m4$coefficients))
 	varlabels <- specificnamecleaning(names(fixef(m4)))
 
 	stargazer(
@@ -1679,28 +1701,28 @@ ggplot() +
 		m2,
 		m3,
 		m4,
-		type="text",
+		type="latex",
 		intercept.bottom=FALSE,
 		no.space=TRUE,
 		column.labels=(c("Treatment","Tweet char.  ","Match char.","Person char.")),
 		star.char = c(".", "*", "**", "***"),
 		star.cutoffs = c(0.1, 0.05, 0.01, 0.001),
-		keep.stat=c("ll"),
-		omit.stat=c("aic","bic"),
+		keep.stat=c("aic","ll"),
+		omit.stat=c("bic"),
 		font.size = "small",
 		label = "RegTab",
-		caption = "Logistic regression model predicting respondents' candidate evaluation on basis of tweet style and controls",
+		caption = "Logistic regression model predicting likelihood to vote on basis of tweet style and controls",
 		dep.var.labels = c("Likelihood to vote"),
 		covariate.labels = varlabels,
 			add.lines = list(	
-							c("Random effects"),
+							c("Diagnostics"),
 							c("--------------------------"),
 							c("NR of respondents",nobsc),
-							c("respondent-level var",indivlvar),
-							c("",GiveBrackets(indivlvarse)),
-							c("NR of countries",nrofcountries),
-							c("country-level var",countryvar),
-							c("",GiveBrackets(countryvarse))
+							c("Multiple R-squared",indivlvar)
+						#	c("",GiveBrackets(indivlvarse)),
+						#	c("NR of countries",nrofcountries),
+						#	c("country-level var",countryvar),
+						#	c("",GiveBrackets(countryvarse))
 							)
 		  )
 
