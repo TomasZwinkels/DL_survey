@@ -1166,7 +1166,7 @@ if(FALSE)
 				nrow(AnalysisDF)
 				
 		# Switserland
-			#    AnalysisDF <- AnalysisDF[which(AnalysisDF$country == "CH"),]
+			    AnalysisDF <- AnalysisDF[which(AnalysisDF$country == "CH"),]
 				nrow(AnalysisDF)
 		
 ### an empty model ~~~~~~
@@ -1222,6 +1222,7 @@ if(FALSE)
 						   image_check,
 						 ,data=AnalysisDFOnlyPersonal)
 			summary(modelimage)
+			stargazer(modelimage, type="text")
 
 			coef(modelimage)
 			betaimage <- coef(modelimage)[which(names(coef(modelimage)) == "image_checkimage")]
@@ -1597,7 +1598,6 @@ ggplot() +
 				cleanernames <- gsub("languageCH-FR","Survey language: French (ref: German))",cleanernames,fixed=TRUE)
 				cleanernames <- gsub("languageCH-DE","Survey language: Swiss German (ref: German)",cleanernames,fixed=TRUE)
 				cleanernames <- gsub("nopartymismatchmismatch","Party mismatch",cleanernames,fixed=TRUE)
-				nopartymismatchmismatch
 				
 				return(cleanernames)
 			}
