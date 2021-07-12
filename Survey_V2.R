@@ -1195,7 +1195,7 @@ if(FALSE)
 						   political_content +
 						   Follow_Politician +
 						   socialmedia_competence +
-						   Gender_politician +
+						#   Gender_politician +
 						   GenderMatch +
 						   noleftrightmismatch +
 						   nopartymismatch +
@@ -1212,7 +1212,7 @@ if(FALSE)
 	
 	# and continuing with the actual core model!
 	model2 <- lmer(polscale~treatment_merged_num +
-					Gender_politician + 
+				#	Gender_politician + 
 					Treatment_simple +
 					toomuch +
 					nopartytreatment +
@@ -1229,7 +1229,7 @@ if(FALSE)
 
 	## in general
 		model3a <- lmer(polscale~treatment_merged_num +
-						Gender_politician + 
+					#	Gender_politician + 
 						Treatment_simple +
 						toomuch +
 						nopartytreatment +
@@ -1248,7 +1248,7 @@ if(FALSE)
 	## and country specific
 	
 		model3b <- lmer(polscale~treatment_merged_num +
-						Gender_politician + 
+					#	Gender_politician + 
 						Treatment_simple +
 						toomuch +
 						nopartytreatment +
@@ -1276,7 +1276,7 @@ if(FALSE)
 	model4 <- lmer(polscale~
 						treatment_merged_num +
 					#	treatment_merged_num * Educ_Level +
-						Gender_politician + 
+					#	Gender_politician + 
 						Treatment_simple +
 						toomuch +
 						nopartytreatment +
@@ -1285,7 +1285,7 @@ if(FALSE)
 						noleftrightmismatch +
 					    (nopartymismatch|country) + # don't forget the manually include this in the final model output!
 						GenderMatch +
-					#   Age + # drop in main
+					    Age + # added upon request, despite its non significant effect on overall model fit
 						Gender + 
 						Educ_Level + 
 						I(left_right_scale_1-50) + # 32 additional cases where lost here
@@ -1304,7 +1304,58 @@ if(FALSE)
 
 		stargazer(model0, model1, model2, model3b, model4, type="text")
 	
+		range(predict(m4)) # predicted range is within the observed range (a bit narrow in fact?)
+		range(AnalysisDF$polscale)
+		
+		par(mfrow=c(2,1))
+		hist(predict(m4))
+		hist(AnalysisDF$polscale)
+		par(mfrow=c(1,1))
+		
+		plot(predict(m4),AnalysisDF$polscale)
+		
+		
+		plot(model4)
 	
+		# hat values
+		hatval <- hatvalues(m4)
+		range(hatvalues(m4)) # Rough rule of thumb: leverage is large is hi > 2(p + 1)/n. 
+		pval =  15
+		nval = 4358
+		2*(16)/4358
+		table(hatval > 2*(16)/4358) # two influential observations, lets inspect
+		hatval[which(hatval > 2*(16)/4358)] # alright, so really only borderline influential, lets see what happens if we run the model with these cases excluded
+		
+		AnalysisDFTEMP <- AnalysisDF
+		AnalysisDFTEMP$polscale[c(14,1098)] <- NA # AnalysisDFTEMP$polscale[c(14,1098,988,1006)] <- NA
+		
+			model4OL <- lmer(polscale~
+						treatment_merged_num +
+						Treatment_simple +
+						toomuch +
+						nopartytreatment +
+						offset(I(betaimage*image_check_num)) + 
+						noleftrightmismatch +
+					    (nopartymismatch|country) + 
+						GenderMatch +
+					    Age + 
+						Gender + 
+						Educ_Level + 
+						I(left_right_scale_1-50) + 
+					   (1|country)
+					  ,data=AnalysisDFTEMP)
+		
+		summary(model4OL)
+		summary(model4)	
+		
+		# new influential cases?
+		hatval2 <- hatvalues(model4OL)
+		table(hatval2 > 2*(16)/4356) # yes, still two cases
+		hatval[which(hatval2 > 2*(16)/4356)] # completly different cases (988 and 1006 now), 
+		# if you add them above, seem keep happening, no difference in models however, I feel confident that there are no influential cases 
+		
+		
+		
 	
 # model with left-right distance on basis of positions
 	
@@ -1730,6 +1781,14 @@ dwplot(m4,
 	(sd(AnalysisDF$nopartymismatch)*2)
 	−21.909 / (sd(AnalysisDF$nopartymismatch)*2)
 	−11.015 / (sd(AnalysisDF$nopartymismatch)*2)
+
+###
+# adding some model diagnostics in on the final model (m4) given that we are now adding age to it.
+###
+
+
+plot(m4)
+	
 
 #######################################################################################################################################
 #building a Table with descriptives of variables used in the regression models above
