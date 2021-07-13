@@ -1186,21 +1186,39 @@ if(FALSE)
 			AnalysisDFOnlyPersonal$image_check <- factor(AnalysisDFOnlyPersonal$image_check ,levels=c("no_image","image"))
 			table(AnalysisDFOnlyPersonal$image_check)
 			
-			modelimage <- lm(polscale~treatment_merged_num + # update model to final model later!
+			modelimage <- lm(polscale~
+						   treatment_merged_num + # update model to final model later!
 						   Age +
 						   Gender +
 						   Educ_Level +
 						   I(left_right_scale_1-50) +
-						   Extremism +
-						   political_content +
-						   Follow_Politician +
-						   socialmedia_competence +
-						#   Gender_politician +
+						   Extremism + # dropped in model 4
+						   political_content + # dropped in model 4
+						   Follow_Politician + # dropped in model 4
+						   socialmedia_competence + # dropped in model 4
+					   #   Gender_politician +
 						   GenderMatch +
-						   noleftrightmismatch +
+						   noleftrightmismatch + # country specific effect in model 4
 						   nopartymismatch +
 						   toomuch +
 						   image_check,
+						   
+						   treatment_merged_num +
+					#	treatment_merged_num * Educ_Level +
+					#	Gender_politician + 
+						Treatment_simple + # 
+						toomuch +
+						nopartytreatment +
+						offset(I(betaimage*image_check_num)) + # don't forget the manually include this in the final model output!
+						# nopartymismatch + # is include as a country specific effect!
+						noleftrightmismatch +
+					    (nopartymismatch|country) + # don't forget the manually include this in the final model output!
+						GenderMatch +
+					    Age + # added upon request, despite its non significant effect on overall model fit
+						Gender + 
+						Educ_Level + 
+						I(left_right_scale_1-50)
+						   
 						 ,data=AnalysisDFOnlyPersonal)
 			summary(modelimage)
 
@@ -1277,7 +1295,7 @@ if(FALSE)
 						treatment_merged_num +
 					#	treatment_merged_num * Educ_Level +
 					#	Gender_politician + 
-						Treatment_simple +
+						Treatment_simple + # not that this is the left right treatment, is just poorly labelled.
 						toomuch +
 						nopartytreatment +
 						offset(I(betaimage*image_check_num)) + # don't forget the manually include this in the final model output!
