@@ -1048,6 +1048,9 @@ names(AnalysisDF)
 	mean(AnalysisDF$Age)
 	sd(AnalysisDF$Age)
 	
+	AnalysisDF$Age_cent <- scale(AnalysisDF$Age,center=TRUE,scale=FALSE)
+	mean(AnalysisDF$Age_cent)
+	
 # gender
 	
 	table(AnalysisDF$Gender)
@@ -1195,7 +1198,7 @@ if(FALSE)
 						noleftrightmismatch +
 					    (nopartymismatch|country) + 
 						GenderMatch +
-					    Age + # also added this here now as well.
+					    Age_cent + # also added this here now as well.
 						Gender + 
 						Educ_Level + 
 						I(left_right_scale_1-50) +
@@ -1285,7 +1288,7 @@ if(FALSE)
 						noleftrightmismatch +
 					    (nopartymismatch|country) + # don't forget the manually include this in the final model output!
 						GenderMatch +
-					    Age + # added upon request, despite its non significant effect on overall model fit
+					    Age_cent + # added upon request, despite its non significant effect on overall model fit
 						Gender + 
 						Educ_Level + 
 						I(left_right_scale_1-50) + # 32 additional cases where lost here
