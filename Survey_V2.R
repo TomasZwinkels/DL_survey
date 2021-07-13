@@ -1622,7 +1622,7 @@ ggplot() +
 				cleanernames <- gsub("Gender_politicianMale","Gender of politician (Male)",cleanernames,fixed=TRUE)
 				cleanernames <- gsub("GenderMatchmismatch","Gender mismatch",cleanernames,fixed=TRUE)
 				cleanernames <- gsub("noleftrightmismatchmismatch","Content left-right mismatch",cleanernames,fixed=TRUE)
-				cleanernames <- gsub("Age","Age",cleanernames,fixed=TRUE)
+				cleanernames <- gsub("Age_cent","Age",cleanernames,fixed=TRUE)
 				cleanernames <- gsub("GenderWeiblich","Gender (Female)",cleanernames,fixed=TRUE)
 				cleanernames <- gsub("Educ_LevelLow","Education Low)",cleanernames,fixed=TRUE)
 				cleanernames <- gsub("Educ_LevelHigh","Education (High)",cleanernames,fixed=TRUE)
