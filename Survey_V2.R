@@ -1202,6 +1202,7 @@ if(FALSE)
 						image_check
 						 ,data=AnalysisDFOnlyPersonal)
 			summary(modelimage)
+			stargazer(modelimage,type="text")
 
 			coef(modelimage)
 			betaimage <- unlist(coef(modelimage)$country[which(names(coef(modelimage)$country) == "image_checkimage")])[1] # changed this to extraction from a multi-level model
