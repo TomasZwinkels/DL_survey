@@ -1693,7 +1693,7 @@ ggplot() +
 				nobs(m2),
 				nobs(m3),
 				nobs(m4))
-						
+			  			
 	nrofcountries <- c(sapply(ranef(m1),nrow)[1],
 							sapply(ranef(m2),nrow)[1],
 							sapply(ranef(m3),nrow)[1],
