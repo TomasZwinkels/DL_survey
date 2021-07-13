@@ -1186,12 +1186,11 @@ if(FALSE)
 			AnalysisDFOnlyPersonal$image_check <- factor(AnalysisDFOnlyPersonal$image_check ,levels=c("no_image","image"))
 			table(AnalysisDFOnlyPersonal$image_check)
 			
-			modelimage <- lm(polscale~
+			modelimage <- lmer(polscale~
 						treatment_merged_num + 
 						Treatment_simple + # 
 						toomuch +
-						nopartytreatment +
-						offset(I(betaimage*image_check_num)) + 
+						nopartytreatment + 
 						# nopartymismatch + # is include as a country specific effect!
 						noleftrightmismatch +
 					    (nopartymismatch|country) + 
@@ -1199,12 +1198,13 @@ if(FALSE)
 					    Age + # also added this here now as well.
 						Gender + 
 						Educ_Level + 
-						I(left_right_scale_1-50)
+						I(left_right_scale_1-50) +
+						image_check
 						 ,data=AnalysisDFOnlyPersonal)
 			summary(modelimage)
 
 			coef(modelimage)
-			betaimage <- coef(modelimage)[which(names(coef(modelimage)) == "image_checkimage")]
+			betaimage <- unlist(coef(modelimage)$country[which(names(coef(modelimage)$country) == "image_checkimage")])[1] # changed this to extraction from a multi-level model
 	
 			AnalysisDF$image_check_num <- ifelse(AnalysisDF$image_check == "image",1,0)
 			table(AnalysisDF$image_check_num,AnalysisDF$image_check)
